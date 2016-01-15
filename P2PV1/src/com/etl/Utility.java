@@ -11,7 +11,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -33,15 +35,17 @@ public final class Utility {
 	public static int runID;
 	public static Map<String, Long> dbObjectJobIdMap = new HashMap<>();
 	public static Map<String, String> encConfig = new HashMap<>();
+	public static String dateFormat;
+	
 	private Utility() {
 
 	}
 
-	public static void intializeLogger() {
+/*	public static void intializeLogger() {
 
 		FileHandler fh;
 		try {
-			fh = new FileHandler(logLocation + File.separator + "App.log", true);
+			fh = new FileHandler("App.log", true);
 			logger.addHandler(fh);
 			SimpleFormatter formatter = new SimpleFormatter();
 			fh.setFormatter(formatter);
@@ -54,13 +58,13 @@ public final class Utility {
 			e.printStackTrace();
 		}
 
-	}
+	}*/
 
 	public static void applicationStart(boolean isManual) {
 
 		Properties properties = new Properties();
 		File pf = new File("config.properties");
-
+		
 		try {
 			properties.load(new FileReader(pf));
 			EncryptionUtil.cipher = Cipher.getInstance("AES");
@@ -68,7 +72,8 @@ public final class Utility {
 			logDbURL = properties.getProperty("LogDBURL");
 			logDbUid = properties.getProperty("LogDBUID");
 			logDbPwd = properties.getProperty("LogDBPwd");
-
+			dateFormat = properties.getProperty("DateFormat");
+			
 			con = createConnection(logDbURL, logDbUid, logDbPwd);
 
 			runID = getRunId(isManual);
@@ -114,12 +119,12 @@ public final class Utility {
 			}
 
 		} catch (SQLException e) {
-
-			e.printStackTrace();
+			System.out.println("Error in getting run Id from config due to "+e.getMessage());  //TODO requires Testing
+			writeLog("Error in getting run Id from config due to "+e.getMessage(), "error", "", "Aplication Startup", "db");  
 
 		} catch (Exception e) {
-
-			e.printStackTrace();
+			System.out.println("Error in getting run Id from config due to "+e.getMessage());
+			writeLog("Error in getting run Id from config due to "+e.getMessage(), "error", "", "Aplication Startup", "db");
 
 		} finally {
 
@@ -147,11 +152,13 @@ public final class Utility {
 
 		} catch (SQLException e) {
 
-			e.printStackTrace();
+			System.out.println("Error in setting run Id into config due to "+e.getMessage());  //TODO requires Testing
+			writeLog("Error in setting run Id into config due to "+e.getMessage(), "error", "", "Aplication Startup", "db");  
 
 		} catch (Exception e) {
 
-			e.printStackTrace();
+			System.out.println("Error in setting run Id into config due to "+e.getMessage());  //TODO requires Testing
+			writeLog("Error in setting run Id to config due into "+e.getMessage(), "error", "", "Aplication Startup", "db");  
 
 		} finally {
 
@@ -177,10 +184,12 @@ public final class Utility {
 
 		} catch (ClassNotFoundException e) {
 			System.out.println("Driver not found");
+			writeLog("Connection exception " +  e.getMessage(),"error","","Application Start","file");
+			System.exit(0);
 		} catch (SQLException sq1ex) {
 
-			System.out.println("Connection exception" + sq1ex.getMessage());
-			writeLog("Connection exception" + sq1ex.getMessage(),"error","","Application Start","file");		
+			System.out.println("Connection exception" + sq1ex.getMessage()); 
+			writeLog("Connection exception " + sq1ex.getMessage(),"error","","Application Start","db");		
 			System.exit(0);
 
 		}
@@ -456,6 +465,13 @@ public final class Utility {
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
+	}
+	
+	public static String getCurrentDate() {
+		SimpleDateFormat sdf = new SimpleDateFormat(dateFormat);
+		Date curDate = new Date();
+		String strDate = sdf.format(curDate);
+		return strDate;
 	}
 
 }

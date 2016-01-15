@@ -160,7 +160,6 @@ public class ScriptRunner {
                             table.setHeaderRow(headerRow);
 
                             out.println("");
-//                            out.println(StringUtils.repeat("---------", md.getColumnCount()));
                             out.flush();
 
                             // Print & Store result rows
@@ -230,29 +229,32 @@ public class ScriptRunner {
             if (!this.autoCommit) { 
                 conn.commit();
             }
-            Utility.writeLog("RunID " + Utility.runID + " Application ended successfully.", "info", "", "Application Ends", "DB");  
             
-        } catch (final SQLException e) {
+        } catch (SQLException e) {
             conn.rollback();
-            e.fillInStackTrace();
-            err.println("Error executing SQL Command: \"" + command + "\"");
-            err.println(e);
-            err.flush();
+            
+            System.out.println("Error executing SQL Command: \"" + command + "\"");
+            
             Utility.writeLog("RunID " + Utility.runID + " Error!!" + e.getMessage(), "error",
             		entity, this.stageDesc, "DB");
-            Utility.writeJobLog(jobId,entity,"Error");
+                     
+            Utility.writeJobLog(jobId, "Error","");
             
-            throw e;
-        } catch (final IOException e) {
-            e.fillInStackTrace();
-            err.println("Error reading SQL Script.");
-            err.println(e);
-            err.flush();
-            throw e;
+            
+        } catch (IOException e) {
+            System.out.println("Error reading in SQL files..");
+            Utility.writeLog("RunID " + Utility.runID + " Error!!" + e.getMessage(), "error",
+            		entity, this.stageDesc, "DB");
+            Utility.writeJobLog(jobId, "Error","");
+            
+        } catch (Exception e) {
+        	
+        	System.out.println("Error!!!! " + e.getMessage());
+            Utility.writeLog("RunID " + Utility.runID + " Error!!" + e.getMessage(), "error",
+            		entity, this.stageDesc, "DB");
+            Utility.writeJobLog(jobId, "Error","");
         }
     }
-    
-    
     
     
     

@@ -248,7 +248,7 @@ public class DataLoader {
 		System.out.println("");
 
 		for(String dimension : dimList) {
-			System.out.println("--------------------------------------------------------");
+			System.out.println("\n--------------------------------------------------------");
 			System.out.println("DataExtraction Operation Started for DB table :" +dimension);
 			System.out.println("--------------------------------------------------------");
 
@@ -376,7 +376,7 @@ public class DataLoader {
 			Iterator<String> factItr = factList.iterator();
 			while(factItr.hasNext()){
 				String fact=factItr.next();
-				System.out.println("--------------------------------------------------------");
+				System.out.println("\n--------------------------------------------------------");
 				System.out.println("DataExtraction Operation Started for facts :" +fact);
 				System.out.println("--------------------------------------------------------");
 				Utility.writeLog("RunID " + Utility.runID+ " DataExtraction Operation Started for facts.", "info", fact, process, "db");
@@ -461,7 +461,7 @@ public class DataLoader {
 					lastModDate = tmpdt[1];
 					line = String.format(line, lastModDate, lastModDate);
 					Utility.writeLog("RunID " + Utility.runID + " Executing query for "
-							+ factName + "where DATE_LAST_MODIFIED >= "
+							+ factName + " where DATE_LAST_MODIFIED >= "
 							+ lastModDate, "info", factName, process,
 							"DB");
 
@@ -837,7 +837,7 @@ public class DataLoader {
 			Utility.writeJobLog(insertIDList.get(listIndex), "REDSHIFTLOADEND", sdf.format(Calendar.getInstance().getTime()));
 			stmt.close();
 			conn.close();
-
+			if(facts!=null) {
 			for (String s : this.facts) {
 				if (s.equals(tableName)) {
 
@@ -848,6 +848,7 @@ public class DataLoader {
 					updateFactsProperty(factsPropFile, tableName, lastModDate);
 				}
 			}
+		}
 
 		} catch (Exception ex) {
 			checkList.put(tableName, "Loading Error");

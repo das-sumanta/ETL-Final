@@ -825,7 +825,7 @@ public class DataLoader {
 					+ scrtKey
 					+ "' timeformat 'YYYY-MM-DD HH:MI:SS' escape removequotes delimiter as ',' IGNOREHEADER 1 ACCEPTINVCHARS;";
 			System.out.println("Executing Query...");
-			Utility.writeLog("Executing Query..\n" + sql, "info", tableName, "LoadRedshift", "DB");
+			Utility.writeLog("Executing Query...", "info", tableName, "LoadRedshift", "DB");
 
 			stmt.executeUpdate(sql);
 

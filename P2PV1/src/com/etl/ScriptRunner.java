@@ -261,7 +261,7 @@ public class ScriptRunner {
     }
     
     public void populateScriptExecuteMap(Map<String,String> scriptExecuteMap, String dimOrFact, String output) {
-		if(Arrays.asList(Utility.DIM).contains(dimOrFact)) {
+		if(Utility.isDimension(dimOrFact)) {
 			scriptExecuteMap.put("dimension",output);
 		} else {
 			scriptExecuteMap.put("fact",output);

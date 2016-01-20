@@ -18,6 +18,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,6 +30,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Scanner;
+
+
+
 
 //import org.apache.log4j.Logger;
 //import org.apache.log4j.PropertyConfigurator;
@@ -77,7 +81,7 @@ public class DataLoader {
 	private String[] extractURL;
 	private  List<String> extractURLTableName;
 	private List<Long> insertIDList;
-	private final String[] DIM;
+//	private final String[] DIM; Now in utility
 	private boolean isDWEntryRestricted;
 	private String dateTimeFormat;
 	private SimpleDateFormat sdf;
@@ -135,7 +139,7 @@ public class DataLoader {
 		}
 
 		
-		DIM = properties.getProperty("Dimensions1").split(","); //TODO Remove
+	//	DIM = properties.getProperty("Dimensions1").split(","); //TODO Remove In Utility
 
 		try {
 			new File(extractLocationLocal).mkdirs();
@@ -196,8 +200,6 @@ public class DataLoader {
 			String[] extractURLTableNameArr = properties.getProperty("FileExtractURLTableName").split(",");
 			extractURLTableName=new ArrayList<>(Arrays.asList(extractURLTableNameArr));
 		}
-		DIM = properties.getProperty("Dimensions1").split(",");
-		
 		
 		try {
 			new File(extractLocationLocal).mkdirs();
@@ -400,7 +402,7 @@ public class DataLoader {
 		List<String> dimList = new ArrayList<>();
 		List<String> factList = new ArrayList<>();
 		for(String file: failedFileList) {
-			if(Arrays.asList(DIM).contains(file)) {
+			if(Utility.isDimension(file)) {
 				dimList.add(file);
 			} else {
 				factList.add(file);
@@ -422,6 +424,7 @@ public class DataLoader {
 		String lastModDate;
 		String[] tmpdt = null;
 		String currDate = null;
+		String subId;
 
 		Properties factsProp = new Properties();
 		Properties tmpProp = new Properties();
@@ -450,15 +453,16 @@ public class DataLoader {
 				String line = scn.next().trim();
 
 				if (!line.isEmpty()) {
-					tmpdt = factsProp.getProperty(factName).split(",");
-					lastModDate = tmpdt[1];
-					line = String.format(line, lastModDate, lastModDate);
-					Utility.writeLog("RunID " + Utility.runID + " Executing query for " + factName + " where DATE_LAST_MODIFIED >= "
-							+ lastModDate, "Info", factName, process, "DB");
+					String finalVal = MessageFormat.format((String) factsProp.get(factName), Utility.SUBID);
+					tmpdt = finalVal.split(",");
+					subId=tmpdt[0];
+					lastModDate = tmpdt[2];
+					line = String.format(line, subId,lastModDate, lastModDate);
+					Utility.writeLog("RunID " + Utility.runID + " Executing query for " + factName + " where DATE_LAST_MODIFIED >= " + lastModDate, "Info", factName, process, "DB");
 					rs = st.executeQuery(line);
 
 					currDate = sdf.format(Calendar.getInstance().getTime());
-					lastModDate = tmpdt[1] + "," + currDate;
+					lastModDate = subId + "," + tmpdt[2] + "," + currDate;
 					updateFactsProperty("tmpFile.properties", factName,	lastModDate);
 
 					if (rs.next()) {
@@ -1076,10 +1080,6 @@ public class DataLoader {
 
 	public SimpleDateFormat getSdf() {
 		return sdf;
-	}
-
-	public String[] getDIM() {
-		return DIM;
 	}
 
 	public void deleteCurrentExtractedDir(File file) {

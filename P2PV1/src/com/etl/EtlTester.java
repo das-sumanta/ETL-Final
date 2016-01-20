@@ -28,9 +28,11 @@ public class EtlTester {
 		Map<String,String> scriptExecuteMap = new HashMap<>();
 		
 		try {
-			if (args.length == 0) {
-				Utility.applicationStart(false);
-
+			validateCMDLineArgs(args);
+			if (args.length == 1) {
+				
+				Utility.applicationStart(false,args[0]);
+								
 				String tmp = "";
 
 				dl= new DataLoader();
@@ -60,7 +62,7 @@ public class EtlTester {
 											System.out.println("Script Execution Started For "+dbObject);
 											System.out.println("--------------------------------------------------------");
 											
-											if( proceedWithFactScriptExecution(dbObject,Arrays.asList(dl.getDIM()),scriptExecuteMap)) {
+											if( proceedWithFactScriptExecution(dbObject,scriptExecuteMap)) {
 												Class.forName(Utility.getConfig("RSCLASS"));
 												con = DriverManager.getConnection(Utility.getConfig("RSDBURL"),	Utility.getConfig("RSUID"),Utility.getConfig("RSPWD"));
 												ScriptRunner scriptRunner = new ScriptRunner(con,false, true,dbObject,scriptExecuteMap);
@@ -85,10 +87,10 @@ public class EtlTester {
 			} else {
 
 				System.out.println("DataLoader running in manual mode");
-				Utility.applicationStart(true);
-				String[] fileList = args[1].split(",");
-				Utility.runID = Integer.valueOf(args[2]);
-				Utility.applicationStart(true);
+				
+				String[] fileList = args[2].split(",");
+				Utility.runID = Integer.valueOf(args[3]);
+				Utility.applicationStart(true,args[1]);
 
 				dl = new DataLoader("r",Utility.runID);
 				dl.createDbExtract('r', fileList);
@@ -125,7 +127,7 @@ public class EtlTester {
 											System.out.println("Script Execution Started For "+dbObject);
 											System.out.println("--------------------------------------------------------");
 											
-											if (proceedWithFactScriptExecution(dbObject,Arrays.asList(dl.getDIM()),scriptExecuteMap)) {
+											if (proceedWithFactScriptExecution(dbObject,scriptExecuteMap)) {
 												Class.forName(Utility.getConfig("RSCLASS"));
 												con = DriverManager.getConnection(Utility.getConfig("RSDBURL"),	Utility.getConfig("RSUID"), Utility.getConfig("RSPWD"));
 
@@ -181,11 +183,20 @@ public class EtlTester {
 
 	}
 
-	private static boolean proceedWithFactScriptExecution(String dbObject, List<String> allDimensions, Map<String, String> scriptExecuteMap ) {
-		if(!allDimensions.contains(dbObject)) {
+	private static boolean proceedWithFactScriptExecution(String dbObject, Map<String, String> scriptExecuteMap ) {
+		if(!Utility.isDimension(dbObject)) {
 			return !scriptExecuteMap.containsKey("dimension");
 		}
 		return true;
 	}
 	
+	private static void validateCMDLineArgs(String[] args) {
+		if(args.length == 0 || (args.length !=1 && args.length !=4 ))
+	    {
+			Utility.writeLog("Please provide valid arguments:\n 1. For NORMAL mode provide: <subsidirayId> \n2. For RE-RUN mode provide: \n\"Re-Process\" <subsidirayId> <comma separated dimension and facts name> <RunID>", "error","","Application StartUp","file");
+	        System.out.println("Please provide valid arguments:\n 1. For NORMAL mode provide: <subsidirayId> \n 2. For RE-RUN mode provide: \n Re-Process <subsidirayId> <comma separated dimension and facts name> <RunID>");
+	        System.exit(0);
+	    }
+	}
+
 }

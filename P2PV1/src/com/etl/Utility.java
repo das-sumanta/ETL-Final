@@ -12,6 +12,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -36,7 +37,8 @@ public final class Utility {
 	public static Map<String, Long> dbObjectJobIdMap = new HashMap<>();
 	public static Map<String, String> encConfig = new HashMap<>();
 	public static String dateFormat;
-	public static String[] DIM;
+	private static String[] DIM;
+	public static String SUBID; 
 	
 	private Utility() {
 
@@ -61,7 +63,7 @@ public final class Utility {
 
 	}*/
 
-	public static void applicationStart(boolean isManual) {
+	public static void applicationStart(boolean isManual,String subsidiaryId) {
 
 		Properties properties = new Properties();
 		File pf = new File("config.properties");
@@ -75,9 +77,10 @@ public final class Utility {
 			logDbPwd = properties.getProperty("LogDBPwd");
 			dateFormat = properties.getProperty("DateFormat");
 			DIM = properties.getProperty("Dimensions1").split(","); 
+			SUBID = subsidiaryId;
 			
 			con = createConnection(logDbURL, logDbUid, logDbPwd);
-
+			
 			runID = getRunId(isManual);
 			if (!isManual) {
 
@@ -199,8 +202,7 @@ public final class Utility {
 		return conn;
 	}
 
-	public static void writeLog(String msg, String type, String entity,
-			String stage, String appender)
+	public static void writeLog(String msg, String type, String entity,	String stage, String appender)
 			 {
 
 		String logSql = "";
@@ -475,5 +477,13 @@ public final class Utility {
 		String strDate = sdf.format(curDate);
 		return strDate;
 	}
+	
+	public  static boolean isDimension(String dimOrFact) {
+		if(Arrays.asList(DIM).contains(dimOrFact)) {
+			return true;
+		}
+		return false;
+	}
+
 
 }

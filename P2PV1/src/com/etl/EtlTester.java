@@ -8,7 +8,9 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 public class EtlTester {
@@ -23,7 +25,8 @@ public class EtlTester {
 		File pf = new File("config.properties");
 		properties.load(new FileReader(pf));
 		String fileExtractURLTableName = properties.getProperty("FileExtractURLTableName");
-
+		Map<String,String> scriptExecuteMap = new HashMap<>();
+		
 		try {
 			if (args.length == 0) {
 				Utility.applicationStart(false);
@@ -48,44 +51,41 @@ public class EtlTester {
 
 						if(!dbObjects.isEmpty() && listOfFiles!=null) {
 							for (String dbObject : dbObjects) {
-								for (int i = 0; i < listOfFiles.length; i++) {
+								if( !dl.checkErrorStatus("Extraction", dbObject) && !dl.checkErrorStatus("Loading", dbObject)) {
+									for (int i = 0; i < listOfFiles.length; i++) {
+										tmp =  dbObject + "_prestage_opn.sql"; 
+										long jobId = Utility.dbObjectJobIdMap.get(dbObject);
+										if (tmp.equalsIgnoreCase(listOfFiles[i].getName())) {
+											System.out.println("\n--------------------------------------------------------");
+											System.out.println("Script Execution Started For "+dbObject);
+											System.out.println("--------------------------------------------------------");
+											
+											if( proceedWithFactScriptExecution(dbObject,Arrays.asList(dl.getDIM()),scriptExecuteMap)) {
+												Class.forName(Utility.getConfig("RSCLASS"));
+												con = DriverManager.getConnection(Utility.getConfig("RSDBURL"),	Utility.getConfig("RSUID"),Utility.getConfig("RSPWD"));
+												ScriptRunner scriptRunner = new ScriptRunner(con,false, true,dbObject,scriptExecuteMap);
+												scriptRunner.runScript(new FileReader(aSQLScriptFilePath + File.separator	+ listOfFiles[i].getName()),jobId,scriptExecuteMap);
+												Utility.writeJobLog(jobId, "COMPLETED",	dl.getSdf().format(Calendar.getInstance().getTime()));
+												break;
+											} else {
+												throw new Exception("There is an issue in dimension's script execution, so fact script execution is skipped.");
+											}
+										} else {
+											continue;
+										}
 
-									tmp =  dbObject + "_prestage_opn.sql"; 
-									long jobId = Utility.dbObjectJobIdMap.get(dbObject);
-									if (tmp.equalsIgnoreCase(listOfFiles[i].getName())) {
-
-
-										Class.forName(Utility.getConfig("RSCLASS"));
-										con = DriverManager.getConnection(
-												Utility.getConfig("RSDBURL"),
-												Utility.getConfig("RSUID"),
-												Utility.getConfig("RSPWD"));
-
-										ScriptRunner scriptRunner = new ScriptRunner(con,false, true,dbObject);
-
-										scriptRunner.runScript(new FileReader(
-												aSQLScriptFilePath + File.separator
-												+ listOfFiles[i].getName()),jobId);
-
-										Utility.writeJobLog(jobId, "COMPLETED",
-												dl.getSdf().format(Calendar
-														.getInstance().getTime()));
-										break;
-
-									} else {
-										continue;
 									}
 								}
 							}
-
 						}	
 					}
 				}
-				Utility.writeLog("RunID " + Utility.runID + " Application has ended.", "info", "", "Application Ends", "DB"); 
-				System.out.println("RunID " + Utility.runID + " Application has ended.");
+				Utility.writeLog("RunID " + Utility.runID + " Application has ended.", "Info", "", "Application Ends", "DB"); 
+				System.out.println("\nRunID " + Utility.runID + " Application has ended.");
 			} else {
 
 				System.out.println("DataLoader running in manual mode");
+				Utility.applicationStart(true);
 				String[] fileList = args[1].split(",");
 				Utility.runID = Integer.valueOf(args[2]);
 				Utility.applicationStart(true);
@@ -116,31 +116,33 @@ public class EtlTester {
 
 						if(!dbObjects.isEmpty() && listOfFiles!=null) {
 							for (String dbObject : dbObjects) {
-								for (int i = 0; i < listOfFiles.length; i++) {
+								if( !dl.checkErrorStatus("Extraction", dbObject) && !dl.checkErrorStatus("Loading", dbObject)) {
+									for (int i = 0; i < listOfFiles.length; i++) {
+										tmp =  dbObject + "_prestage_opn.sql"; 
+										long jobId = Utility.dbObjectJobIdMap.get(dbObject);
+										if (tmp.equalsIgnoreCase(listOfFiles[i].getName())) {
+											System.out.println("\n--------------------------------------------------------");
+											System.out.println("Script Execution Started For "+dbObject);
+											System.out.println("--------------------------------------------------------");
+											
+											if (proceedWithFactScriptExecution(dbObject,Arrays.asList(dl.getDIM()),scriptExecuteMap)) {
+												Class.forName(Utility.getConfig("RSCLASS"));
+												con = DriverManager.getConnection(Utility.getConfig("RSDBURL"),	Utility.getConfig("RSUID"), Utility.getConfig("RSPWD"));
 
-									tmp =  dbObject + "_prestage_opn.sql"; 
-									long jobId = Utility.dbObjectJobIdMap.get(dbObject);
-									if (tmp.equalsIgnoreCase(listOfFiles[i].getName())) {
+												ScriptRunner scriptRunner = new ScriptRunner(con, false, true, dbObject,scriptExecuteMap);
 
-										Class.forName(Utility.getConfig("RSCLASS"));
-										con = DriverManager.getConnection(
-												Utility.getConfig("RSDBURL"),
-												Utility.getConfig("RSUID"),
-												Utility.getConfig("RSPWD"));
+												scriptRunner.runScript(new FileReader(aSQLScriptFilePath + File.separator + listOfFiles[i].getName()),jobId,scriptExecuteMap);
 
-										ScriptRunner scriptRunner = new ScriptRunner(con, false, true, dbObject);
+												Utility.writeJobLog(jobId, "COMPLETED",	dl.getSdf().format(Calendar.getInstance().getTime()));
+												break;
+											}
+											else {
+												throw new Exception("There is an issue in dimension's script execution, so fact script execution is skipped.");
+											}
+										} else {
+											continue;
+										}
 
-										scriptRunner.runScript(new FileReader(
-												aSQLScriptFilePath + File.separator
-												+ listOfFiles[i].getName()),jobId);
-
-										Utility.writeJobLog(jobId, "COMPLETED",
-												dl.getSdf().format(Calendar
-														.getInstance().getTime()));
-										break;
-
-									} else {
-										continue;
 									}
 								}
 							}
@@ -148,23 +150,42 @@ public class EtlTester {
 
 					}
 				}
-				Utility.writeLog("RunID " + Utility.runID + " Application has ended.", "info", "", "Application Ends", "DB"); 
-				System.out.println("RunID " + Utility.runID + " Application has ended.");
+				Utility.writeLog("RunID " + Utility.runID + " Application has ended.", "Info", "", "Application Ends", "DB"); 
+				System.out.println("\nRunID " + Utility.runID + " Application has ended.");
 			}
 		} catch (ClassNotFoundException e) {
 			System.out.println("Error !! Please check error message "+ e.getMessage());
-			Utility.writeLog("RunID " + Utility.runID  + "Error !! Please check error message. "+ e.getMessage(), "error", "", "ScriptRunner Startup", "db");
-			System.exit(0);
+			Utility.writeLog("RunID " + Utility.runID  + "Error !! Please check error message. "+ e.getMessage(), "Error", "", "ScriptRunner Startup", "db");
+		//	System.exit(0);
+			Utility.writeLog("RunID " + Utility.runID + " Application has ended.", "Info", "", "Application Ends", "DB"); 
+			System.out.println("\nRunID " + Utility.runID + " Application has ended.");
 		} catch (IOException e) {
 			System.out.println("Error !! Please check error message "+ e.getMessage());
-			Utility.writeLog("RunID " + Utility.runID  + "Error !! Please check error message. "+ e.getMessage(), "error", "", "ScriptRunner Startup", "db");
-
+			Utility.writeLog("RunID " + Utility.runID  + "Error !! Please check error message. "+ e.getMessage(), "Error", "", "ScriptRunner Startup", "db");
+			Utility.writeLog("RunID " + Utility.runID + " Application has ended.", "Info", "", "Application Ends", "DB"); 
+			System.out.println("\nRunID " + Utility.runID + " Application has ended.");
 		} catch (SQLException e) {
-			Utility.writeLog("RunID " + Utility.runID + " Error !! Please check error message. " + e.getMessage(),"error","","ScriptRunner Startup","db");
+			System.out.println("Error !! Please check error message "+ e.getMessage());
+			Utility.writeLog("RunID " + Utility.runID + " Error !! Please check error message. " + e.getMessage(),"Error","","ScriptRunner Startup","db");
+			Utility.writeLog("RunID " + Utility.runID + " Application has ended.", "Info", "", "Application Ends", "DB"); 
+			System.out.println("\nRunID " + Utility.runID + " Application has ended.");
 		} catch (Exception e) {
-			Utility.writeLog("RunID " + Utility.runID + " Error !! Please check error message. " + e.getMessage(), "error","","ScriptRunner Startup","db");
+			System.out.println("Error !! Please check error message "+ e.getMessage());
+			Utility.writeLog("RunID " + Utility.runID + " Error !! Please check error message. " + e.getMessage(), "Error","","ScriptRunner Startup","db");
+			Utility.writeLog("RunID " + Utility.runID + " Application has ended.", "Info", "", "Application Ends", "DB"); 
+			System.out.println("\nRunID " + Utility.runID + " Application has ended.");
+		}finally {
+			if(con!=null)
+				Utility.closeConnection(con);
 		}
 
 	}
 
+	private static boolean proceedWithFactScriptExecution(String dbObject, List<String> allDimensions, Map<String, String> scriptExecuteMap ) {
+		if(!allDimensions.contains(dbObject)) {
+			return !scriptExecuteMap.containsKey("dimension");
+		}
+		return true;
+	}
+	
 }

@@ -99,7 +99,7 @@ public class DataLoader {
 		} else {
 			System.out.println("No dimentions are mentioned in the config file. Facts processing cannot be done without dimension, hence terminating the program.");
 			Utility.writeLog("Error !! No dimentions are mentioned in the config file. Facts processing cannot be done without dimension, hence terminating the program.",
-					"error","","Aplication Startup","db");
+					"Error","","Application Startup","db");
 			System.exit(0);
 		}
 
@@ -135,7 +135,7 @@ public class DataLoader {
 		}
 
 		
-		DIM = properties.getProperty("Dimensions1").split(",");
+		DIM = properties.getProperty("Dimensions1").split(","); //TODO Remove
 
 		try {
 			new File(extractLocationLocal).mkdirs();
@@ -143,15 +143,15 @@ public class DataLoader {
 
 			// Creating JDBC DB Connection
 			Class.forName(Utility.getConfig("NETSUITEDRIVER"));
-			
+
 			connectionString = String
 					.format("jdbc:ns://%s:%d;ServerDataSource=%s;encrypted=1;CustomProperties=(AccountID=%s;RoleID=%d)",
-							Utility.getConfig("NETSUITESERVERHOST"), Integer.parseInt(Utility.getConfig("NETSUITEPORT")), Utility.getConfig("NETSUITEDATASOURCE"), Integer.parseInt(Utility.getConfig("NETSUITEACCOUNTID")),
+							Utility.getConfig("NETSUITESERVERHOST"), Integer.parseInt(Utility.getConfig("NETSUITEPORT")), Utility.getConfig("NETSUITEDATASOURCE"), Utility.getConfig("NETSUITEACCOUNTID"),
 							Integer.parseInt(Utility.getConfig("NETSUITEROLEID")));
 
 			con = DriverManager.getConnection(connectionString, Utility.getConfig("NETSUITELOGIN"), Utility.getConfig("NETSUITEPASSWORD"));
 
-			Utility.writeLog("Application Started Successfully.RunID  of this session is "+ Utility.runID, "info", "", "Aplication Startup", "db");
+			Utility.writeLog("Application Started Successfully.RunID  of this session is "+ Utility.runID, "Info", "", "Application Startup", "db");
 
 			System.out.println("************************************ WELCOME TO P2P DB DATA LOADER UTILITIES ************************************");
 
@@ -159,7 +159,7 @@ public class DataLoader {
 			System.out.println("Error !! Please check error message "
 					+ e.getMessage());
 			Utility.writeLog("RunID " + Utility.runID + "Error !! Please check error message. "
-					+ e.getMessage(), "error", "", "Aplication Startup", "db");
+					+ e.getMessage(), "Error", "", "Application Startup", "db");
 			System.exit(0);
 		} 
 
@@ -190,6 +190,7 @@ public class DataLoader {
 		extractURL = properties.getProperty("FileExtractURL").split(",");
 		dateTimeFormat = properties.getProperty("DateTimeFormat");
 		sdf = new SimpleDateFormat(dateTimeFormat);
+		sdfType1 =new SimpleDateFormat(properties.getProperty("DateTimeFormatType1"));
 		
 		if (!properties.getProperty("FileExtractURLTableName").isEmpty() && !properties.getProperty("FileExtractURLTableName").equalsIgnoreCase("NONE")) {
 			String[] extractURLTableNameArr = properties.getProperty("FileExtractURLTableName").split(",");
@@ -206,7 +207,7 @@ public class DataLoader {
 			
 			connectionString = String
 					.format("jdbc:ns://%s:%d;ServerDataSource=%s;encrypted=1;CustomProperties=(AccountID=%s;RoleID=%d)",
-							Utility.getConfig("NETSUITESERVERHOST"), Integer.parseInt(Utility.getConfig("NETSUITEPORT")), Utility.getConfig("NETSUITEDATASOURCE"), Integer.parseInt(Utility.getConfig("NETSUITEACCOUNTID")),
+							Utility.getConfig("NETSUITESERVERHOST"), Integer.parseInt(Utility.getConfig("NETSUITEPORT")), Utility.getConfig("NETSUITEDATASOURCE"), Utility.getConfig("NETSUITEACCOUNTID"),
 							Integer.parseInt(Utility.getConfig("NETSUITEROLEID")));
 
 			con = DriverManager
@@ -215,7 +216,7 @@ public class DataLoader {
 
 			Utility.writeLog(
 					"Application Started Successfully.RunID  of this session is "
-							+ Utility.runID, "info", "", "Aplication Startup", "db");
+							+ Utility.runID, "Info", "", "Application Startup", "db");
 
 			System.out
 					.println("************************************ WELCOME TO P2P DB DATA LOADER UTILITIES ************************************");
@@ -223,7 +224,7 @@ public class DataLoader {
 		}  catch (ClassNotFoundException e) {
 			System.out.println("Error !! Please check error message "+ e.getMessage());
 			Utility.writeLog("RunID " + Utility.runID + "Error !! Please check error message. "
-					+ e.getMessage(), "error", "", "Aplication Startup", "db");
+					+ e.getMessage(), "Error", "", "Application Startup", "db");
 			System.exit(0);
 		}
 
@@ -252,7 +253,7 @@ public class DataLoader {
 			System.out.println("DataExtraction Operation Started for DB table :" +dimension);
 			System.out.println("--------------------------------------------------------");
 
-			Utility.writeLog("RunID " + Utility.runID+ " DataExtraction Operation Started for DB table "+ dimension, "info", dimension,	process, "db");
+			Utility.writeLog("RunID " + Utility.runID+ " DataExtraction Operation Started for DB table "+ dimension, "Info", dimension,	process, "db");
 			long jobId = Utility.writeJobLog(Utility.runID, dimension, runMode, "In-Progress");
 			insertIDList.add(jobId);
 			Utility.dbObjectJobIdMap.put(dimension,jobId);
@@ -265,8 +266,7 @@ public class DataLoader {
 
 				Utility.writeJobLog(jobId, "EXTRACTSTART", sdf.format(Calendar.getInstance().getTime()));
 
-				Utility.writeLog("RunID " + Utility.runID + " Retrieving data for "
-						+ dimension, "info", dimension, process, "db");
+				Utility.writeLog("RunID " + Utility.runID + " Retrieving data for "	+ dimension, "Info", dimension, process, "db");
 
 				System.out.println("Retrieving data...");
 
@@ -279,9 +279,7 @@ public class DataLoader {
 				Date curDate = new Date();
 				String strDate = sdfType1.format(curDate);
 
-				String fileName = extractLocationLocal + File.separator
-						+ dimension + "-" + "RunID-" + Utility.runID + "-"
-						+ strDate + ".csv";
+				String fileName = extractLocationLocal + File.separator	+ dimension + "-" + "RunID-" + Utility.runID + "-" + strDate + ".csv";
 				File file = new File(fileName);
 				FileWriter fstream = new FileWriter(file);
 				BufferedWriter out = new BufferedWriter(fstream);
@@ -312,8 +310,7 @@ public class DataLoader {
 
 					for (int j = 0; j < row.size(); j++) {
 						if (!String.valueOf(row.get(j)).equals("null")) {
-							String tmp = "\"" + String.valueOf(row.get(j))
-									+ "\"";
+							String tmp = "\"" + String.valueOf(row.get(j)) + "\"";
 							out.append(tmp);
 							if (j != row.size() - 1) {
 								out.append(csvDelimiter);
@@ -330,13 +327,9 @@ public class DataLoader {
 
 				Utility.writeJobLog(jobId, "EXTRACTEND", sdf.format(Calendar.getInstance().getTime()));
 
-				Utility.writeLog("RunID " + Utility.runID
-						+ " DataExtraction Operation for table "
-						+ dimension + " is extracted in " + fileName,
-						"info", dimension, process, "db");
+				Utility.writeLog("RunID " + Utility.runID + " DataExtraction Operation for table " + dimension + " is extracted in " + fileName, "Info", dimension, process, "db");
 
-				System.out.println("DataExtraction Operation for table "
-						+ dimension + " is extracted in " + fileName);
+				System.out.println("DataExtraction Operation for table " + dimension + " is extracted in " + fileName);
 
 				checkList.put(dimension, "Extraction Done");
 
@@ -344,7 +337,7 @@ public class DataLoader {
 				System.out.println("SQL Error!! Please Check the query and try again.\n"+ e.getMessage());
 				checkList.put(dimension, "Extraction Error");
 
-				Utility.writeLog("RunID " + Utility.runID + " SQL Error!!" + e.getMessage(), "error", dimension, process, "db");
+				Utility.writeLog("RunID " + Utility.runID + " SQL Error!!" + e.getMessage(), "Error", dimension, process, "db");
 
 				Utility.writeJobLog(insertIDList.get(insertIDList.size()-1), "Error", "");
 
@@ -353,7 +346,7 @@ public class DataLoader {
 				System.out.println("IO Error!! Please check the error message.\n" + e.getMessage());
 				checkList.put(dimension, "Extraction Error");
 
-				Utility.writeLog("RunID " + Utility.runID + " Error!!" + e.getMessage(), "error", dimension, process, "db");
+				Utility.writeLog("RunID " + Utility.runID + " Error!!" + e.getMessage(), "Error", dimension, process, "db");
 
 				Utility.writeJobLog(insertIDList.get(insertIDList.size()-1), "Error", "");
 
@@ -361,7 +354,7 @@ public class DataLoader {
 				System.out.println("RunID " + Utility.runID+ " Error!! Please check the error message.\n"+ e.getMessage());
 				checkList.put(dimension, "Extraction Error");
 
-				Utility.writeLog("RunID " + Utility.runID + " Error!!" + e.getMessage(), "error", dimension, process, "db");
+				Utility.writeLog("RunID " + Utility.runID + " Error!!" + e.getMessage(), "Error", dimension, process, "db");
 
 				Utility.writeJobLog(insertIDList.get(insertIDList.size()-1), "Error", "");
 
@@ -379,7 +372,7 @@ public class DataLoader {
 				System.out.println("\n--------------------------------------------------------");
 				System.out.println("DataExtraction Operation Started for facts :" +fact);
 				System.out.println("--------------------------------------------------------");
-				Utility.writeLog("RunID " + Utility.runID+ " DataExtraction Operation Started for facts.", "info", fact, process, "db");
+				Utility.writeLog("RunID " + Utility.runID+ " DataExtraction Operation Started for facts.", "Info", fact, process, "db");
 				insertIDList.add(Utility.writeJobLog(Utility.runID, fact,runMode, "In-Progress"));
 				Utility.dbObjectJobIdMap.put(fact,insertIDList.get(insertIDList.size() - 1));
 				Utility.writeJobLog(insertIDList.get(insertIDList.size()-1), "EXTRACTSTART", sdf.format(Calendar.getInstance().getTime()));
@@ -393,7 +386,7 @@ public class DataLoader {
 					checkList.put(fact, "Extraction Error");
 					System.out.println("RunID " + Utility.runID + " Error!! in extracting fact "+ fact +" due to "+ e.getMessage());
 
-					Utility.writeLog("RunID " + Utility.runID + " Error!!" + e.getMessage(), "error", fact, process, "db");
+					Utility.writeLog("RunID " + Utility.runID + " Error!!" + e.getMessage(), "Error", fact, process, "db");
 					Utility.writeJobLog(insertIDList.get(insertIDList.size()-1), "Error","");
 
 				} //Removed finally continue  Not required will continue
@@ -460,23 +453,19 @@ public class DataLoader {
 					tmpdt = factsProp.getProperty(factName).split(",");
 					lastModDate = tmpdt[1];
 					line = String.format(line, lastModDate, lastModDate);
-					Utility.writeLog("RunID " + Utility.runID + " Executing query for "
-							+ factName + " where DATE_LAST_MODIFIED >= "
-							+ lastModDate, "info", factName, process,
-							"DB");
-
+					Utility.writeLog("RunID " + Utility.runID + " Executing query for " + factName + " where DATE_LAST_MODIFIED >= "
+							+ lastModDate, "Info", factName, process, "DB");
 					rs = st.executeQuery(line);
 
 					currDate = sdf.format(Calendar.getInstance().getTime());
 					lastModDate = tmpdt[1] + "," + currDate;
-					updateFactsProperty("tmpFile.properties", factName,
-							lastModDate);
+					updateFactsProperty("tmpFile.properties", factName,	lastModDate);
 
 					if (rs.next()) {
 
 						System.out.println("Retrieving data...");
 
-						Utility.writeLog("Retrieving data for " + factName, "info",	factName, process, "DB");
+						Utility.writeLog("Retrieving data for " + factName, "Info",	factName, process, "DB");
 
 						Date curDate = new Date();
 						String strDate = sdfType1.format(curDate);
@@ -526,7 +515,7 @@ public class DataLoader {
 
 						checkList.put(factName, "Extraction Done");
 						System.out.println("Extraction Completed for fact "+ factName);
-						Utility.writeLog("RunID " + Utility.runID+ " Extraction Completed for fact " + factName, "info", factName, process, "DB");
+						Utility.writeLog("RunID " + Utility.runID+ " Extraction Completed for fact " + factName, "Info", factName, process, "DB");
 						Utility.writeJobLog(insertIDList.get(insertIDList.size()-1), "EXTRACTEND", sdf.format(Calendar.getInstance().getTime()));
 						
 					} else {
@@ -540,7 +529,7 @@ public class DataLoader {
 										+ " No resultset generated after executing query for "
 										+ factName
 										+ " where DATE_LAST_MODIFIED >= "
-										+ lastModDate, "info", factName,
+										+ lastModDate, "Info", factName,
 								process, "DB");
 						Utility.writeJobLog(insertIDList.get(insertIDList.size()-1), "ERROR", null);
 								
@@ -560,19 +549,19 @@ public class DataLoader {
 			if (st != null)
 				st.close();
 
-		} catch (FileNotFoundException e) {
+		} catch (FileNotFoundException e) {  //All commented as handled in calling method
 
-			Utility.writeLog("RunID " + Utility.runID + " Error!!" + e.getMessage(), "error", "", process, "DB");
+		//	Utility.writeLog("RunID " + Utility.runID + " Error!!" + e.getMessage(), "Error", "", process, "DB"); 
 			throw new FileNotFoundException(e.toString());
 
 		} catch (SQLException e) {
 
-			Utility.writeLog("RunID " + Utility.runID + " Error!!" + e.getMessage(), "error", "", process, "DB");
-			throw new SQLException();
+		//	Utility.writeLog("RunID " + Utility.runID + " Error!!" + e.getMessage(), "Error", "", process, "DB");
+			throw new SQLException(e.toString());
 
 		} catch (IOException e) {
 
-			Utility.writeLog("RunID " + Utility.runID + " Error!!" + e.getMessage(), "error", "", process, "DB");
+		//	Utility.writeLog("RunID " + Utility.runID + " Error!!" + e.getMessage(), "Error", "", process, "DB");
 			throw new IOException(e.toString());
 
 		} 
@@ -597,6 +586,7 @@ public class DataLoader {
 		}
  		
 		s3AndRedShiftUpload(files, CommonConstants.S3_TRANSFER); 
+    	deleteCurrentExtractedDir(new File(extractLocationLocal));
 
 	}
 
@@ -604,14 +594,13 @@ public class DataLoader {
 		AWSCredentials credentials = null;
 		try {
 
-			credentials = new ProfileCredentialsProvider(awsProfile)
-					.getCredentials();
+			credentials = new ProfileCredentialsProvider(awsProfile).getCredentials();
 		} catch (Exception e) {
 			System.out.println("Error in "+process+" Cannot load the credentials from the credential profiles file.");
 			Utility.writeLog(
 					"Cannot load the credentials from the credential profiles file. "
 							+ "Please make sure that your credentials file is at the correct "
-							+ "location, and is in valid format.", "error", "",	process, "DB");
+							+ "location, and is in valid format.", "Error", "",	process, "DB");
 			throw new AmazonClientException(
 					"Cannot load the credentials from the credential profiles file. "
 							+ "Please make sure that your credentials file is at the correct "
@@ -625,8 +614,9 @@ public class DataLoader {
 		tx = new TransferManager(s3);
 
 		String bucketName = extractLocationS3;
-
-		System.out.println("\nUploading DB Extracts to Amazon S3");
+		
+		System.out.println("\n--------------------------------------------------------");
+		System.out.println("Uploading DB Extracts to Amazon S3");
 		System.out.println("--------------------------------------------------------");
 
 		for (int i = 0; i < files.size(); i++) {
@@ -638,7 +628,7 @@ public class DataLoader {
 				try {
 
 					File s3File = getLastFileModifiedFile(extractLocationLocal,	files.get(i));
-					Utility.writeLog("RunID " + Utility.runID + " Uploading " + s3File.getName()+ " to Amazon S3 bucket " + bucketName,	"info", files.get(i), process, "DB");
+					Utility.writeLog("RunID " + Utility.runID + " Uploading " + s3File.getName()+ " to Amazon S3 bucket " + bucketName,	"Info", files.get(i), process, "DB");
 					System.out.println("Uploading " + s3File.getName()+ " to S3...");
 
 					PutObjectRequest request = new PutObjectRequest(bucketName,
@@ -650,9 +640,7 @@ public class DataLoader {
 
 						Utility.writeJobLog(insertIDList.get(i), "S3LOADEND", sdf.format(Calendar.getInstance().getTime()));
 
-						Utility.writeLog("RunID " + Utility.runID +" "+ s3File.getName()
-								+ " transferred successfully.", "info", files.get(i),
-								process, "DB");
+						Utility.writeLog("RunID " + Utility.runID +" "+ s3File.getName() + " transferred successfully.", "Info", files.get(i), process, "DB");
 
 						System.out.println(files.get(i) + " file transferred.");
 
@@ -672,7 +660,7 @@ public class DataLoader {
 									+ ase.getStatusCode() + " AWS Error Code: "
 									+ ase.getErrorCode() + " Error Type: "
 									+ ase.getErrorType() + " Request Id: "
-									+ ase.getRequestId(), "error", "", process, "DB");
+									+ ase.getRequestId(), "Error", "", process, "DB");
 					System.out.println("Caught an AmazonServiceException, which means your request made it "
 									+ "to Amazon S3, but was rejected with an error response for some reason.");
 					System.out.println("Error Message:    " + ase.getMessage());
@@ -692,13 +680,13 @@ public class DataLoader {
 					Utility.writeLog("Caught an AmazonClientException, which means the client encountered "
 									+ "a serious internal problem while trying to communicate with S3, "
 									+ "such as not being able to access the network."
-									+ ace.getMessage(), "error", files.get(i), process, "DB");
+									+ ace.getMessage(), "Error", files.get(i), process, "DB");
 					Utility.writeJobLog(insertIDList.get(i), "Error","");
 					
 				} catch (Exception e) {
 					checkList.put(files.get(i), "Loading Error");
 					System.out.println("Error !! Please check error message "+ e.getMessage());
-					Utility.writeLog("RunID " + Utility.runID + " " + e.getMessage(), "error", files.get(i), process, "DB");
+					Utility.writeLog("RunID " + Utility.runID + " " + e.getMessage(), "Error", files.get(i), process, "DB");
 					Utility.writeJobLog(insertIDList.get(i), "Error","");
 					
 				} //Removed finally continue  Not required will continue
@@ -707,7 +695,7 @@ public class DataLoader {
 				checkList.put(files.get(i), "Loading Error");  
 				System.out.println("There is an issue while creating the extract of "+ files.get(i)	+ ". So loading operation is skipped for "+ files.get(i)+"\n");
 				Utility.writeLog("As there is an issue while creating the extract of "+ files.get(i) + " so loading operation is skipped for "
-						+ files.get(i), "info", files.get(i), process, "DB");
+						+ files.get(i), "Info", files.get(i), process, "DB");
 				
 			}
 		}
@@ -728,7 +716,7 @@ public class DataLoader {
 						Utility.writeLog(
 								"There is an error in copying dimension "+dimension
 								+" to Redshift, hence fact will not work properly, hence, dw entry will be restricted.", 
-								"error", fact,"LoadRedshift", "DB");
+								"Error", fact,"LoadRedshift", "DB");
 
 						Utility.writeJobLog(insertIDList.get(listIndex), "Error","");
 						isDWEntryRestricted=true;   
@@ -772,7 +760,7 @@ public class DataLoader {
 			System.out.println("Error in S3Transfer process : Cannot load the credentials from the credential profiles file");
 			Utility.writeLog("Cannot load the credentials from the credential profiles file. "
 							+ "Please make sure that your credentials file is at the correct "
-							+ "location, and is in valid format.", "error", "",	"S3Transfer", "DB");
+							+ "location, and is in valid format.", "Error", "",	"S3Transfer", "DB");
 			throw new AmazonClientException(
 					"Cannot load the credentials from the credential profiles file. "
 							+ "Please make sure that your credentials file is at the correct "
@@ -788,7 +776,7 @@ public class DataLoader {
 		String scrtKey = credentials.getAWSSecretKey();
 
 		System.out.println("RedShift Data loading started for " + tableName);
-		Utility.writeLog("RedShift Data loading started for " + tableName, "info", tableName, "LoadRedshift", "DB");
+		Utility.writeLog("RedShift Data loading started for " + tableName, "Info", tableName, "LoadRedshift", "DB");
 		try {
 
 			// System.out.println("Waiting 1 min. for the availability of the file in Amazon S3");
@@ -825,14 +813,14 @@ public class DataLoader {
 					+ scrtKey
 					+ "' timeformat 'YYYY-MM-DD HH:MI:SS' escape removequotes delimiter as ',' IGNOREHEADER 1 ACCEPTINVCHARS;";
 			System.out.println("Executing Query...");
-			Utility.writeLog("Executing Query...", "info", tableName, "LoadRedshift", "DB");
+			Utility.writeLog("Executing Query...", "Info", tableName, "LoadRedshift", "DB");
 
 			stmt.executeUpdate(sql);
 
 			System.out.println("Done.\n");
 
 			checkList.put(tableName, "Loading Done");
-			Utility.writeLog("RedShift Data loading is completed successfully for "+ tableName, "info", tableName, "LoadRedshift", "DB");
+			Utility.writeLog("RedShift Data loading is completed successfully for "+ tableName, "Info", tableName, "LoadRedshift", "DB");
 			
 			Utility.writeJobLog(insertIDList.get(listIndex), "REDSHIFTLOADEND", sdf.format(Calendar.getInstance().getTime()));
 			stmt.close();
@@ -855,7 +843,7 @@ public class DataLoader {
 			System.out.println("Error occured while loading data from S3 to Redshift Cluster for "+ tableName+ " " + ex.getMessage()+" hence, dw entry will be restricted.\n");
 
 			Utility.writeLog("RunID "+ Utility.runID + " Error occured while loading data from S3 to Redshift Cluster for "
-							+ tableName + " " + ex.getMessage() + " hence, dw entry will be restricted.", "error", tableName, "LoadRedshift", "DB");
+							+ tableName + " " + ex.getMessage() + " hence, dw entry will be restricted.", "Error", tableName, "LoadRedshift", "DB");
 			
 			Utility.writeJobLog(insertIDList.get(listIndex), "ERROR", sdf.format(Calendar.getInstance().getTime())); 
 			//System.exit(0);
@@ -910,7 +898,7 @@ public class DataLoader {
 				
 				Utility.writeLog("Fetching Flat file from URL " + url
 						+ " and storing the file in " + extractLocationLocal
-						+ " location", "info", extractURLTableName.get(i), "URLDataExtraction",	"DB");
+						+ " location", "Info", extractURLTableName.get(i), "URLDataExtraction",	"DB");
 				
 				long jobId =Utility.writeJobLog(Utility.runID, extractURLTableName.get(i),"Normal", "In-Progress");
 				insertIDList.add(jobId);
@@ -954,14 +942,14 @@ public class DataLoader {
 		} catch (IOException e) {
 			System.out.println("Error !! Please check log for details");
 			
-			Utility.writeLog("Error \n " + e.getMessage(), "error", dimName,
+			Utility.writeLog("Error \n " + e.getMessage(), "Error", dimName,
 					"URLDataExtraction", "DB");
 			
 			Utility.writeJobLog(insertIDList.get(insertIDList.size()-1), "Error","");
 
 		} catch(Exception ex) {
 
-			Utility.writeLog("Error \n " + ex.getMessage(), "error", dimName,
+			Utility.writeLog("Error \n " + ex.getMessage(), "Error", dimName,
 					"URLDataExtraction", "DB");
 			
 			Utility.writeJobLog(insertIDList.get(insertIDList.size()-1), "Error","");
@@ -973,7 +961,7 @@ public class DataLoader {
 					mapReader.close();
 				} catch (IOException e) {
 					System.out.println("Error !! Please check log for details");
-					Utility.writeLog("Error \n " + e.getMessage(), "error",
+					Utility.writeLog("Error \n " + e.getMessage(), "Error",
 							dimName, "URLDataExtraction", "DB");
 				}
 			}
@@ -982,7 +970,7 @@ public class DataLoader {
 					mapWriter.close();
 				} catch (IOException e) {
 					System.out.println("Error !! Please check log for details");
-					Utility.writeLog("Error \n " + e.getMessage(), "error",
+					Utility.writeLog("Error \n " + e.getMessage(), "Error",
 							dimName, "URLDataExtraction", "DB");
 				}
 			}
@@ -1060,7 +1048,7 @@ public class DataLoader {
 		}
 	}
 	
-	private boolean checkErrorStatus(String errorType, String tabName) {
+	public boolean checkErrorStatus(String errorType, String tabName) {
 
 		String status = checkList.get(tabName);
 		
@@ -1090,4 +1078,17 @@ public class DataLoader {
 		return sdf;
 	}
 
+	public String[] getDIM() {
+		return DIM;
+	}
+
+	public void deleteCurrentExtractedDir(File file) {
+	    File[] contents = file.listFiles();
+	    if (contents != null) {
+	        for (File f : contents) {
+	        	deleteCurrentExtractedDir(f);
+	        }
+	    }
+	    file.delete();
+	}
 }

@@ -10,7 +10,10 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 
@@ -26,6 +29,7 @@ public class ScriptRunner {
     private final PrintWriter out, err;
     private String stageDesc;
     private String entity;
+    Map<String,String> scriptExecuteMap = new HashMap<>();
    
     
 	/* To Store any 'SELECT' queries output */
@@ -34,7 +38,7 @@ public class ScriptRunner {
 	/* To Store any SQL Queries output except 'SELECT' SQL */
     private List<String> sqlOutput;
 
-    public ScriptRunner(final Connection connection, final boolean autoCommit, final boolean stopOnError,String entity) {
+    public ScriptRunner(final Connection connection, final boolean autoCommit, final boolean stopOnError,String entity, Map<String, String> scriptExecuteMap) {
         if (connection == null) {
             throw new RuntimeException("ScriptRunner requires an SQL Connection");
         }
@@ -48,24 +52,24 @@ public class ScriptRunner {
         tableList = new ArrayList<Table>();
         sqlOutput = new ArrayList<String>();
         stageDesc = "";
-        
+        this.scriptExecuteMap.putAll(scriptExecuteMap);
         
 
     }
 
-    public void runScript(final Reader reader, long jobId) throws SQLException, IOException {
+    public void runScript(final Reader reader, long jobId, Map<String, String> scriptExecuteMap) throws SQLException, IOException {
         final boolean originalAutoCommit = this.connection.getAutoCommit();
         try {
             if (originalAutoCommit != this.autoCommit) {
                 this.connection.setAutoCommit(this.autoCommit);
             }
-            this.runScript(this.connection, reader, jobId);
+            this.runScript(this.connection, reader, jobId, scriptExecuteMap);
         } finally {
             this.connection.setAutoCommit(originalAutoCommit);
         }
     }
 
-    private void runScript(final Connection conn, final Reader reader, long jobId) throws SQLException, IOException {
+    private void runScript(final Connection conn, final Reader reader, long jobId, Map<String, String> scriptExecuteMap) throws SQLException, IOException {
         StringBuffer command = null;
        
         Table table = null;
@@ -123,20 +127,21 @@ public class ScriptRunner {
                         	System.out.println("Executing query ->" + command.toString());
                             hasResults = stmt.execute(command.toString());
                             //writeDBLog(runID,stmt.getUpdateCount() + " row(s) affected.",entity, this.errorCode,"Info" );
+           //                 System.out.println(stmt.getUpdateCount()+"--this.stageDesc="+this.stageDesc);
+           //                 Utility.writeLog(stmt.getUpdateCount() + " row(s) affected.", "Info", entity, this.stageDesc, "DB"); //Added Jan18
                         } else {
                             try {
                             	System.out.println("Executing query ->" + command.toString());
                             	stmt.execute(command.toString());
-                            	Utility.writeLog(stmt.getUpdateCount() + " row(s) affected.", "Info",
-                                		entity, this.stageDesc, "DB");
+                            	Utility.writeLog(stmt.getUpdateCount() + " row(s) affected.", "Info", entity, this.stageDesc, "DB");
+                            	
                             } catch (final SQLException e) {
                                 e.fillInStackTrace();
                                 err.println("Error executing SQL Command: \"" + command + "\"");
                                 err.println(e);
                                 err.flush();
                                 
-                                Utility.writeLog("RunID " + Utility.runID + " Error!!" + e.getMessage(), "error",
-                                		entity, this.stageDesc, "DB");
+                                Utility.writeLog("RunID " + Utility.runID + " Error!!" + e.getMessage(), "error", entity, this.stageDesc, "DB");
                                 throw e;
                             }
                         }
@@ -161,22 +166,26 @@ public class ScriptRunner {
 
                             out.println("");
                             out.flush();
-
+                            
                             // Print & Store result rows
+                           // int selectedRowCount =0;
+                            int recordsIdentified=0;
                             while (rs.next()) {
                                 List<String> touple = new ArrayList<String>();
+                          //      selectedRowCount++;
                                 for (int i = 1; i <= cols; i++) {
                                     final String value = rs.getString(i);
                                     out.print(value + "\t");
-
+                                    recordsIdentified=Integer.valueOf(value);
                                     touple.add(value);
                                 }
                                 out.println("");
-
-                                toupleList.add(touple);
+                                toupleList.add(touple);          //TODO need to remove also out is not required
                             }
                             out.flush();
-
+                            System.out.println(this.stageDesc+"="+recordsIdentified);
+                            Utility.writeLog(recordsIdentified + " row(s) affected.", "Info", entity, this.stageDesc, "DB"); //Added Jan18
+                            
                             table.setToupleList(toupleList);
                             this.tableList.add(table);
                             table = null;
@@ -187,8 +196,7 @@ public class ScriptRunner {
                             out.flush();
                             if(!stageDesc.equals("")) {
                             	                           	
-                            	Utility.writeLog(stmt.getUpdateCount() + " row(s) affected.", "Info",
-                                		entity, this.stageDesc, "DB");
+                            	Utility.writeLog(stmt.getUpdateCount() + " row(s) affected.", "Info", entity, this.stageDesc, "DB");
                                 stageDesc = "";
                             }
                             
@@ -231,32 +239,35 @@ public class ScriptRunner {
             }
             
         } catch (SQLException e) {
-            conn.rollback();
-            
+            conn.rollback();  //TODO rollback other cases
+            populateScriptExecuteMap(scriptExecuteMap, entity,"Error");
             System.out.println("Error executing SQL Command: \"" + command + "\"");
-            
-            Utility.writeLog("RunID " + Utility.runID + " Error!!" + e.getMessage(), "error",
-            		entity, this.stageDesc, "DB");
-                     
+            Utility.writeLog("RunID " + Utility.runID + " Error!!" + e.getMessage(), "Error", entity, this.stageDesc, "DB");
             Utility.writeJobLog(jobId, "Error","");
             
             
         } catch (IOException e) {
             System.out.println("Error reading in SQL files..");
-            Utility.writeLog("RunID " + Utility.runID + " Error!!" + e.getMessage(), "error",
-            		entity, this.stageDesc, "DB");
+            populateScriptExecuteMap(scriptExecuteMap, entity,"Error");
+            Utility.writeLog("RunID " + Utility.runID + " Error!!" + e.getMessage(), "Error", entity, this.stageDesc, "DB");
             Utility.writeJobLog(jobId, "Error","");
             
         } catch (Exception e) {
-        	
+        	populateScriptExecuteMap(scriptExecuteMap, entity,"Error");
         	System.out.println("Error!!!! " + e.getMessage());
-            Utility.writeLog("RunID " + Utility.runID + " Error!!" + e.getMessage(), "error",
-            		entity, this.stageDesc, "DB");
+            Utility.writeLog("RunID " + Utility.runID + " Error!!" + e.getMessage(), "Error", entity, this.stageDesc, "DB");
             Utility.writeJobLog(jobId, "Error","");
         }
     }
     
-    
+    public void populateScriptExecuteMap(Map<String,String> scriptExecuteMap, String dimOrFact, String output) {
+		if(Arrays.asList(Utility.DIM).contains(dimOrFact)) {
+			scriptExecuteMap.put("dimension",output);
+		} else {
+			scriptExecuteMap.put("fact",output);
+		}
+	}
+
     
 
     /**

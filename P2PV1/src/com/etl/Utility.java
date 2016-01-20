@@ -36,6 +36,7 @@ public final class Utility {
 	public static Map<String, Long> dbObjectJobIdMap = new HashMap<>();
 	public static Map<String, String> encConfig = new HashMap<>();
 	public static String dateFormat;
+	public static String[] DIM;
 	
 	private Utility() {
 
@@ -73,6 +74,7 @@ public final class Utility {
 			logDbUid = properties.getProperty("LogDBUID");
 			logDbPwd = properties.getProperty("LogDBPwd");
 			dateFormat = properties.getProperty("DateFormat");
+			DIM = properties.getProperty("Dimensions1").split(","); 
 			
 			con = createConnection(logDbURL, logDbUid, logDbPwd);
 
@@ -188,7 +190,7 @@ public final class Utility {
 			System.exit(0);
 		} catch (SQLException sq1ex) {
 
-			System.out.println("Connection exception" + sq1ex.getMessage()); 
+			System.out.println("Connection exception " + sq1ex.getMessage()); 
 			writeLog("Connection exception " + sq1ex.getMessage(),"error","","Application Start","db");		
 			System.exit(0);
 
@@ -420,7 +422,7 @@ public final class Utility {
 				break;
 
 			case "COMPLETED":
-				logSql = "UPDATE job_log SET RedShiftLoadEnd = ?, job_status ='SUCCESS' WHERE job_id = ? ";
+				logSql = "UPDATE job_log SET RedShiftLoadEnd = ?, job_status ='Success' WHERE job_id = ? and job_status <>'Error'";
 				break;
 
 			default:

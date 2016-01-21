@@ -68,6 +68,15 @@ public class EtlTester {
 												ScriptRunner scriptRunner = new ScriptRunner(con,false, true,dbObject,scriptExecuteMap);
 												scriptRunner.runScript(new FileReader(aSQLScriptFilePath + File.separator	+ listOfFiles[i].getName()),jobId,scriptExecuteMap);
 												Utility.writeJobLog(jobId, "COMPLETED",	dl.getSdf().format(Calendar.getInstance().getTime()));
+
+												if(!Utility.isDimension(dbObject)) {
+													Properties p = new Properties();
+													File tmpf = new File("tmpFile.properties");
+													p.load(new FileReader(tmpf));
+													String lastModDate = p.getProperty(dbObject);
+													dl.updateFactsProperty("facts.properties", dbObject, lastModDate);
+												}
+												
 												break;
 											} else {
 												throw new Exception("There is an issue in dimension's script execution, so fact script execution is skipped.");
@@ -136,6 +145,15 @@ public class EtlTester {
 												scriptRunner.runScript(new FileReader(aSQLScriptFilePath + File.separator + listOfFiles[i].getName()),jobId,scriptExecuteMap);
 
 												Utility.writeJobLog(jobId, "COMPLETED",	dl.getSdf().format(Calendar.getInstance().getTime()));
+												
+												if(!Utility.isDimension(dbObject)) {
+													Properties p = new Properties();
+													File tmpf = new File("tmpFile.properties");
+													p.load(new FileReader(tmpf));
+													String lastModDate = p.getProperty(dbObject);
+													dl.updateFactsProperty("facts.properties", dbObject, lastModDate);
+												}
+												
 												break;
 											}
 											else {

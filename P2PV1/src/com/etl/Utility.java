@@ -243,8 +243,8 @@ public final class Utility {
 				Timestamp currentTimestamp = new java.sql.Timestamp(calendar
 						.getTime().getTime());
 
-				logSql = "INSERT INTO message_log(runid,message_desc,target_table,message_stage,message_type,message_timestamp) "
-						+ "VALUES(?,?,?,?,?,?)";
+				logSql = "INSERT INTO message_log(runid,message_desc,target_table,message_stage,message_type,message_timestamp, subsidiary_id) "
+						+ "VALUES(?,?,?,?,?,?,?)";
 
 				ps = con.prepareStatement(logSql);
 				ps.setInt(1, Utility.runID);
@@ -253,6 +253,7 @@ public final class Utility {
 				ps.setString(4, stage);
 				ps.setString(5, type);
 				ps.setTimestamp(6, currentTimestamp);
+				ps.setString(7, Utility.SUBID);
 				ps.executeUpdate();
 				closeConnection(con);
 
@@ -353,14 +354,15 @@ public final class Utility {
 				con = createConnection(logDbURL, logDbUid, logDbPwd);
 			}
 
-			logSql = "INSERT INTO job_log(runid,entity,run_mode,job_status) "
-					+ "VALUES(?,?,?,?)";
+			logSql = "INSERT INTO job_log(runid,entity,run_mode,job_status, subsidiary_id) "
+					+ "VALUES(?,?,?,?,?)";
 
 			ps = con.prepareStatement(logSql, Statement.RETURN_GENERATED_KEYS);
 			ps.setInt(1, runID);
 			ps.setString(2, entity);
 			ps.setString(3, run_mode);
 			ps.setString(4, job_status);
+			ps.setString(5, Utility.SUBID);
 			ps.executeUpdate();
 			ResultSet rs = ps.getGeneratedKeys();
 			if (rs != null && rs.next()) {

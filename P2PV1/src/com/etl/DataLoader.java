@@ -453,9 +453,8 @@ public class DataLoader {
 				String line = scn.next().trim();
 
 				if (!line.isEmpty()) {
-					String finalVal = MessageFormat.format((String) factsProp.get(factName), Utility.SUBID);
-					tmpdt = finalVal.split(",");
-					subId=tmpdt[0];
+					tmpdt = ((String) factsProp.get(factName)).split(",");
+					subId=Utility.SUBID;
 					lastModDate = tmpdt[2];
 					line = String.format(line, subId,lastModDate, lastModDate);
 					Utility.writeLog("RunID " + Utility.runID + " Executing query for " + factName + " where DATE_LAST_MODIFIED >= " + lastModDate, "Info", factName, process, "DB");
@@ -829,7 +828,7 @@ public class DataLoader {
 			Utility.writeJobLog(insertIDList.get(listIndex), "REDSHIFTLOADEND", sdf.format(Calendar.getInstance().getTime()));
 			stmt.close();
 			conn.close();
-			if(facts!=null) {
+			/*if(facts!=null) {
 			for (String s : this.facts) {
 				if (s.equals(tableName)) {
 
@@ -840,7 +839,7 @@ public class DataLoader {
 					updateFactsProperty(factsPropFile, tableName, lastModDate);
 				}
 			}
-		}
+		}*/
 
 		} catch (Exception ex) {
 			checkList.put(tableName, "Loading Error");
@@ -1028,7 +1027,7 @@ public class DataLoader {
 		return files;
 	}
 
-	private void updateFactsProperty(String propName, String key, String value) throws FileNotFoundException {
+	public void updateFactsProperty(String propName, String key, String value) throws FileNotFoundException {
 
 		Properties props = new Properties();
 		Writer writer = null;
@@ -1038,7 +1037,7 @@ public class DataLoader {
 
 				props.load(new FileReader(f));
 				props.setProperty(key.trim(), value.trim());
-
+				System.out.println("\nUpdating file "+propName+"\n");
 				writer = new FileWriter(f);
 				props.store(writer, null);
 				writer.close();

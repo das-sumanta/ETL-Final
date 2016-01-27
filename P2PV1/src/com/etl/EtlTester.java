@@ -67,14 +67,17 @@ public class EtlTester {
 												con = DriverManager.getConnection(Utility.getConfig("RSDBURL"),	Utility.getConfig("RSUID"),Utility.getConfig("RSPWD"));
 												ScriptRunner scriptRunner = new ScriptRunner(con,false, true,dbObject,scriptExecuteMap);
 												scriptRunner.runScript(new FileReader(aSQLScriptFilePath + File.separator	+ listOfFiles[i].getName()),jobId,scriptExecuteMap);
-												Utility.writeJobLog(jobId, "COMPLETED",	dl.getSdf().format(Calendar.getInstance().getTime()));
-
-												if(!Utility.isDimension(dbObject)) {
+												Utility.closeConnection(con);
+												Utility.writeJobLog(jobId, "COMPLETED",	dl.getSdf().format(Calendar.getInstance().getTime())); 
+												
+												if(!Utility.isDimension(dbObject) && scriptExecuteMap.get(dbObject)==null ) { 
 													Properties p = new Properties();
 													File tmpf = new File("tmpFile.properties");
 													p.load(new FileReader(tmpf));
 													String lastModDate = p.getProperty(dbObject);
-													dl.updateFactsProperty("facts.properties", dbObject, lastModDate);
+													String[] tmpDt = lastModDate.split(",");
+												//	dl.updateFactsProperty("facts.properties", dbObject, lastModDate);
+													Utility.updateFactExtDtl(dbObject, tmpDt[0], tmpDt[1], tmpDt[2]);
 												}
 												
 												break;
@@ -122,7 +125,7 @@ public class EtlTester {
 					if(aSQLScriptFilePath!=null && !aSQLScriptFilePath.isEmpty()) {
 						File folder = new File(aSQLScriptFilePath);
 						File[] listOfFiles = folder.listFiles();
-
+  
 						dbObjects.addAll(dl.getListOfDimensionsFacts());
 
 						if(!dbObjects.isEmpty() && listOfFiles!=null) {
@@ -143,15 +146,19 @@ public class EtlTester {
 												ScriptRunner scriptRunner = new ScriptRunner(con, false, true, dbObject,scriptExecuteMap);
 
 												scriptRunner.runScript(new FileReader(aSQLScriptFilePath + File.separator + listOfFiles[i].getName()),jobId,scriptExecuteMap);
-
-												Utility.writeJobLog(jobId, "COMPLETED",	dl.getSdf().format(Calendar.getInstance().getTime()));
 												
-												if(!Utility.isDimension(dbObject)) {
+												Utility.closeConnection(con);
+												
+												Utility.writeJobLog(jobId, "COMPLETED",	dl.getSdf().format(Calendar.getInstance().getTime())); 
+												
+												if(!Utility.isDimension(dbObject) && scriptExecuteMap.get(dbObject)==null ) { 
 													Properties p = new Properties();
 													File tmpf = new File("tmpFile.properties");
 													p.load(new FileReader(tmpf));
 													String lastModDate = p.getProperty(dbObject);
-													dl.updateFactsProperty("facts.properties", dbObject, lastModDate);
+													String[] tmpDt = lastModDate.split(",");
+												//	dl.updateFactsProperty("facts.properties", dbObject, lastModDate);
+													Utility.updateFactExtDtl(dbObject, tmpDt[0], tmpDt[1], tmpDt[2]);
 												}
 												
 												break;

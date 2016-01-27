@@ -39,6 +39,7 @@ public final class Utility {
 	public static String dateFormat;
 	private static String[] DIM;
 	public static String SUBID; 
+	public static String factExtConstDt;
 	
 	private Utility() {
 
@@ -78,6 +79,7 @@ public final class Utility {
 			dateFormat = properties.getProperty("DateFormat");
 			DIM = properties.getProperty("Dimensions1").split(","); 
 			SUBID = subsidiaryId;
+			factExtConstDt =  properties.getProperty("FactExtConstDt");
 			
 			con = createConnection(logDbURL, logDbUid, logDbPwd);
 			
@@ -487,5 +489,81 @@ public final class Utility {
 		return false;
 	}
 
+	public static String getDatesFromFact(String factName, String subId, String startDt, String endDt) throws SQLException{
+		String logSql = "";
+		String extTSStr = "";
+
+		try {
+			if (con.isClosed()) {
+				con = createConnection(logDbURL, logDbUid, logDbPwd);
+			}
+
+			logSql = "SELECT ext_end_dt FROM fact_ext_dtl where fact_name=? and subsidiary_id=?";
+
+			ps = con.prepareStatement(logSql);
+			ps.setString(1, factName);
+			ps.setString(2, subId);
+
+			ResultSet rs = ps.executeQuery();
+			if (rs != null && rs.next()) {
+				Timestamp extTs = rs.getTimestamp(1);
+				
+				extTSStr=extTs.toString().substring(0, extTs.toString().length()-2);
+			} else {
+				//TODO RunID 193 Error!! in extracting fact po_fact due to Cannot format given Object as a Date
+				/*logSql = "INSERT INTO fact_ext_dtl(fact_name,subsidiary_id,ext_start_dt,ext_end_dt) VALUES(?,?,?,?)";
+
+				ps = con.prepareStatement(logSql);
+				ps.setString(1, factName);
+				ps.setString(2, subId);
+				ps.setTimestamp(3, Timestamp.valueOf(startDt));
+				ps.setTimestamp(4, Timestamp.valueOf(endDt));
+				ps.executeUpdate();
+				
+				extTSStr=factExtConstDt;*/
+				throw new SQLException("Table fact_ext_dtl is missing "+factName+" entry.");
+
+			}
+
+			
+		} catch (SQLException e) {
+			throw new SQLException(e.toString());
+
+		} finally {
+
+			closeConnection(con);
+		}
+
+		return extTSStr;
+	}
+
+	public static void updateFactExtDtl(String factName, String subId, String startDt, String endDt) throws SQLException{
+		String logSql = "";
+		try {
+			if (con.isClosed()) {
+				con = createConnection(logDbURL, logDbUid, logDbPwd);
+			}
+
+			logSql = "UPDATE fact_ext_dtl SET ext_start_dt=STR_TO_DATE(?,'%Y-%m-%d %H:%i:%s') , ext_end_dt=STR_TO_DATE(?,'%Y-%m-%d %H:%i:%s') where fact_name=? and subsidiary_id=?";
+
+			ps = con.prepareStatement(logSql);
+		//	Timestamp startTs = Timestamp.valueOf(startDt);
+			ps.setString(1, startDt);
+		//	Timestamp endTs = Timestamp.valueOf(endDt);
+			ps.setString(2, endDt);
+			ps.setString(3, factName);
+			ps.setString(4, subId);
+			ps.executeUpdate();
+			System.out.println("FactExtDtl updated.");
+
+		} catch (SQLException e) {
+			throw new SQLException(e.toString());
+
+		} finally {
+
+			closeConnection(con);
+		}
+
+	}
 
 }

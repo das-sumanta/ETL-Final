@@ -9,10 +9,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 
@@ -31,13 +28,6 @@ public class ScriptRunner {
     private String entity;
     Map<String,String> scriptExecuteMap = new HashMap<>();
    
-    
-	/* To Store any 'SELECT' queries output */
-    private List<Table> tableList;
-	
-	/* To Store any SQL Queries output except 'SELECT' SQL */
-    private List<String> sqlOutput;
-
     public ScriptRunner(final Connection connection, final boolean autoCommit, final boolean stopOnError,String entity, Map<String, String> scriptExecuteMap) {
         if (connection == null) {
             throw new RuntimeException("ScriptRunner requires an SQL Connection");
@@ -49,8 +39,6 @@ public class ScriptRunner {
         this.out = new PrintWriter(System.out);
         this.err = new PrintWriter(System.err);
         this.entity = entity;
-        tableList = new ArrayList<Table>();
-        sqlOutput = new ArrayList<String>();
         stageDesc = "";
         this.scriptExecuteMap.putAll(scriptExecuteMap);
         
@@ -97,7 +85,7 @@ public class ScriptRunner {
                }
                
 				// Interpret SQL Comment & Some statement that are not executable
-                if (trimmedLine.startsWith("--")
+                if (trimmedLine.isEmpty() || trimmedLine.startsWith("--")
                         || trimmedLine.startsWith("//")
                         || trimmedLine.startsWith("#")
                         || trimmedLine.startsWith("/*")
@@ -148,54 +136,26 @@ public class ScriptRunner {
 
                         rs = stmt.getResultSet();
                         if (hasResults && rs != null) {
-
-                            List<String> headerRow = new ArrayList<String>();
-                            List<List<String>> toupleList = new ArrayList<List<String>>();
-
                             // Print & Store result column names
                             final ResultSetMetaData md = rs.getMetaData();
                             final int cols = md.getColumnCount();
-                            for (int i = 0; i < cols; i++) {
-                                final String name = md.getColumnLabel(i + 1);
-                                out.print(name + "\t");
-
-                                headerRow.add(name);
-                            }
-							
-                            table.setHeaderRow(headerRow);
-
-                            out.println("");
-                            out.flush();
-                            
-                            // Print & Store result rows
-                           // int selectedRowCount =0;
+                           
                             int recordsIdentified=0;
                             while (rs.next()) {
-                                List<String> touple = new ArrayList<String>();
-                          //      selectedRowCount++;
                                 for (int i = 1; i <= cols; i++) {
                                     final String value = rs.getString(i);
-                                    out.print(value + "\t");
                                     recordsIdentified=Integer.valueOf(value);
-                                    touple.add(value);
                                 }
-                                out.println("");
-                                toupleList.add(touple);          //TODO need to remove also out is not required
+                                
                             }
                             out.flush();
                             System.out.println(this.stageDesc+"="+recordsIdentified);
                             Utility.writeLog(recordsIdentified + " row(s) affected.", "Info", entity, this.stageDesc, "DB"); //Added Jan18
-                            
-                            table.setToupleList(toupleList);
-                            this.tableList.add(table);
-                            table = null;
-                        } else {
-                            sqlOutput.add(stmt.getUpdateCount() + " row(s) affected.");
 
+                        } else {
                             out.println(stmt.getUpdateCount() + " row(s) affected.");
                             out.flush();
                             if(!stageDesc.equals("")) {
-                            	                           	
                             	Utility.writeLog(stmt.getUpdateCount() + " row(s) affected.", "Info", entity, this.stageDesc, "DB");
                                 stageDesc = "";
                             }
@@ -239,7 +199,7 @@ public class ScriptRunner {
             }
             
         } catch (SQLException e) {
-            conn.rollback();  //TODO rollback other cases
+            conn.rollback();
             populateScriptExecuteMap(scriptExecuteMap, entity,"Error");
             System.out.println("Error executing SQL Command: \"" + command + "\"");
             Utility.writeLog("RunID " + Utility.runID + " Error!!" + e.getMessage(), "Error", entity, this.stageDesc, "DB");
@@ -264,37 +224,7 @@ public class ScriptRunner {
 		if(Utility.isDimension(dimOrFact)) {
 			scriptExecuteMap.put("dimension",output);
 		} else {
-			scriptExecuteMap.put("fact",output);
+			scriptExecuteMap.put(dimOrFact,output);
 		}
 	}
-
-    
-
-    /**
-     * @return the tableList
-     */
-    public List<Table> getTableList() {
-        return tableList;
-    }
-
-    /**
-     * @param tableList the tableList to set
-     */
-    public void setTableList(List<Table> tableList) {
-        this.tableList = tableList;
-    }
-
-    /**
-     * @return the sqlOutput
-     */
-    public List<String> getSqlOutput() {
-        return sqlOutput;
-    }
-
-    /**
-     * @param sqlOutput the sqlOutput to set
-     */
-    public void setSqlOutput(List<String> sqlOutput) {
-        this.sqlOutput = sqlOutput;
-    }
 }

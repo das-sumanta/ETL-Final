@@ -18,7 +18,6 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,9 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Scanner;
-
-
-
 
 //import org.apache.log4j.Logger;
 //import org.apache.log4j.PropertyConfigurator;
@@ -81,7 +77,6 @@ public class DataLoader {
 	private String[] extractURL;
 	private  List<String> extractURLTableName;
 	private List<Long> insertIDList;
-//	private final String[] DIM; Now in utility
 	private boolean isDWEntryRestricted;
 	private String dateTimeFormat;
 	private SimpleDateFormat sdf;
@@ -415,16 +410,16 @@ public class DataLoader {
 		createDBExtract(dimensions, facts, CommonConstants.RUNMODE_REPROCESS, CommonConstants.DATAEXTRACTION_REPROCESS);
 
 	}
-
+	
 	private void createFactExtract(Connection conn, String factFile,
 			String factName, String process, Iterator<String> factItr) throws SQLException, IOException {
 
 		Statement st = null;
 		ResultSet rs = null;
 		String lastModDate;
-		String[] tmpdt = null;
+//		String[] tmpdt = null;
 		String currDate = null;
-		String subId;
+//		String subId;
 
 		Properties factsProp = new Properties();
 		Properties tmpProp = new Properties();
@@ -453,15 +448,21 @@ public class DataLoader {
 				String line = scn.next().trim();
 
 				if (!line.isEmpty()) {
-					tmpdt = ((String) factsProp.get(factName)).split(",");
-					subId=Utility.SUBID;
-					lastModDate = tmpdt[2];
-					line = String.format(line, subId,lastModDate, lastModDate);
+					
+					lastModDate = Utility.getDatesFromFact(factName, Utility.SUBID, Utility.factExtConstDt, Utility.factExtConstDt);
+			//		line = String.format(line, Utility.SUBID,lastModDate, lastModDate);
+					String[] queryParts= line.split("UNION");
+					StringBuilder finalQuery= new StringBuilder();
+					for(String queryPart:queryParts){
+						finalQuery.append(String.format(queryPart, Utility.SUBID,lastModDate));
+						finalQuery.append("UNION");
+					}
+					finalQuery.delete(finalQuery.lastIndexOf("UNION"),finalQuery.length());
 					Utility.writeLog("RunID " + Utility.runID + " Executing query for " + factName + " where DATE_LAST_MODIFIED >= " + lastModDate, "Info", factName, process, "DB");
-					rs = st.executeQuery(line);
+					rs = st.executeQuery(finalQuery.toString());
 
 					currDate = sdf.format(Calendar.getInstance().getTime());
-					lastModDate = subId + "," + tmpdt[2] + "," + currDate;
+					lastModDate =  Utility.SUBID + "," + lastModDate + "," + currDate;
 					updateFactsProperty("tmpFile.properties", factName,	lastModDate);
 
 					if (rs.next()) {
@@ -754,7 +755,7 @@ public class DataLoader {
 		Connection conn = null;
 		Statement stmt = null;
 		AWSCredentials credentials = null;
-		String lastModDate = "";
+//		String lastModDate = "";
 
 		try {
 			credentials = new ProfileCredentialsProvider(awsProfile)
@@ -828,29 +829,27 @@ public class DataLoader {
 			Utility.writeJobLog(insertIDList.get(listIndex), "REDSHIFTLOADEND", sdf.format(Calendar.getInstance().getTime()));
 			stmt.close();
 			conn.close();
-			/*if(facts!=null) {
-			for (String s : this.facts) {
-				if (s.equals(tableName)) {
-
-					Properties p = new Properties();
-					File pf = new File("tmpFile.properties");
-					p.load(new FileReader(pf));
-					lastModDate = p.getProperty(tableName);
-					updateFactsProperty(factsPropFile, tableName, lastModDate);
-				}
-			}
-		}*/
 
 		} catch (Exception ex) {
 			checkList.put(tableName, "Loading Error");
-			System.out.println("Error occured while loading data from S3 to Redshift Cluster for "+ tableName+ " " + ex.getMessage()+" hence, dw entry will be restricted.\n");
+			if(Utility.isDimension(tableName)) {
+				System.out.println("Error occured while loading data from S3 to Redshift Cluster for "+ tableName+ " " + ex.getMessage()+" hence, dw entry will be restricted.\n");
 
-			Utility.writeLog("RunID "+ Utility.runID + " Error occured while loading data from S3 to Redshift Cluster for "
-							+ tableName + " " + ex.getMessage() + " hence, dw entry will be restricted.", "Error", tableName, "LoadRedshift", "DB");
+				Utility.writeLog("RunID "+ Utility.runID + " Error occured while loading data from S3 to Redshift Cluster for "
+								+ tableName + " " + ex.getMessage() + " hence, dw entry will be restricted.", "Error", tableName, "LoadRedshift", "DB");
+				
+				Utility.writeJobLog(insertIDList.get(listIndex), "ERROR", sdf.format(Calendar.getInstance().getTime())); 
+				isDWEntryRestricted=true; 
+			} else {
+				System.out.println("Error occured while loading data from S3 to Redshift Cluster for "+ tableName+ " " + ex.getMessage()+"\n");
+
+				Utility.writeLog("RunID "+ Utility.runID + " Error occured while loading data from S3 to Redshift Cluster for "
+								+ tableName + " " + ex.getMessage(), "Error", tableName, "LoadRedshift", "DB");
+				
+				Utility.writeJobLog(insertIDList.get(listIndex), "ERROR", sdf.format(Calendar.getInstance().getTime())); 
+			//	isDWEntryRestricted=true; 
+			}
 			
-			Utility.writeJobLog(insertIDList.get(listIndex), "ERROR", sdf.format(Calendar.getInstance().getTime())); 
-			//System.exit(0);
-			isDWEntryRestricted=true; 
 
 		} finally {
 			// Finally block to close resources.
@@ -1021,7 +1020,7 @@ public class DataLoader {
 			files.addAll(facts);
 		} else if (dimensions != null && !dimensions.isEmpty()  && (facts == null || facts.isEmpty())) {
 			files = dimensions;
-		} else if (dimensions == null  && dimensions.isEmpty()  && (facts != null || !facts.isEmpty())) {
+		} else if (dimensions == null  || dimensions.isEmpty()  && (facts != null || !facts.isEmpty())) {
 			files = facts;
 		} 
 		return files;
@@ -1037,7 +1036,7 @@ public class DataLoader {
 
 				props.load(new FileReader(f));
 				props.setProperty(key.trim(), value.trim());
-				System.out.println("\nUpdating file "+propName+"\n");
+				System.out.println("\nUpdated file "+propName+"\n");
 				writer = new FileWriter(f);
 				props.store(writer, null);
 				writer.close();
@@ -1090,4 +1089,5 @@ public class DataLoader {
 	    }
 	    file.delete();
 	}
+	
 }

@@ -45,25 +45,6 @@ public final class Utility {
 
 	}
 
-/*	public static void intializeLogger() {
-
-		FileHandler fh;
-		try {
-			fh = new FileHandler("App.log", true);
-			logger.addHandler(fh);
-			SimpleFormatter formatter = new SimpleFormatter();
-			fh.setFormatter(formatter);
-
-		} catch (SecurityException e) {
-
-			e.printStackTrace();
-		} catch (IOException e) {
-
-			e.printStackTrace();
-		}
-
-	}*/
-
 	public static void applicationStart(boolean isManual,String subsidiaryId) {
 
 		Properties properties = new Properties();
@@ -345,8 +326,7 @@ public final class Utility {
 		return "";
 	}
 
-	public static long writeJobLog(int runID, String entity, String run_mode,
-			String job_status) {
+	public static long writeJobLog(int runID, String entity, String run_mode, String job_status) {
 
 		String logSql = "";
 		long key = -1L;
@@ -547,9 +527,7 @@ public final class Utility {
 			logSql = "UPDATE fact_ext_dtl SET ext_start_dt=STR_TO_DATE(?,'%Y-%m-%d %H:%i:%s') , ext_end_dt=STR_TO_DATE(?,'%Y-%m-%d %H:%i:%s') where fact_name=? and subsidiary_id=?";
 
 			ps = con.prepareStatement(logSql);
-		//	Timestamp startTs = Timestamp.valueOf(startDt);
 			ps.setString(1, startDt);
-		//	Timestamp endTs = Timestamp.valueOf(endDt);
 			ps.setString(2, endDt);
 			ps.setString(3, factName);
 			ps.setString(4, subId);
@@ -564,6 +542,38 @@ public final class Utility {
 			closeConnection(con);
 		}
 
+	}
+	
+	public static boolean proceedToRunStatistics() throws SQLException {
+		boolean proceed = false;
+		String logSql = "";
+
+		try {
+			if (con.isClosed()) {
+				con = createConnection(logDbURL, logDbUid, logDbPwd);
+			}
+
+			logSql = "select count(1) from job_log where runid=? and job_status='Error'";
+
+			ps = con.prepareStatement(logSql);
+			ps.setInt(1, runID);
+
+			ResultSet rs = ps.executeQuery();
+			while(rs.next()) {
+				if(rs.getInt(1)==0) {
+					proceed=true;
+				} 
+			}
+		} catch (SQLException e) {
+			throw new SQLException(e.toString());
+
+		} finally {
+
+			closeConnection(con);
+		}
+
+		return proceed;
+		
 	}
 
 }

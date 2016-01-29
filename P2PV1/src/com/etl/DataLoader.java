@@ -64,7 +64,6 @@ public class DataLoader {
 	private String extractLocationURL;
 	private String extractLocationS3;
 	private String factsSqlScriptLocation;
-	private String factsPropFile;
 	private TransferManager tx;
 	private Upload upload;
 	private String awsProfile;
@@ -90,8 +89,6 @@ public class DataLoader {
 		File pf = new File(appConfigPropFile);
 		properties.load(new FileReader(pf));
 
-		factsPropFile = "facts.properties";
-				
 		if (!properties.getProperty("Dimensions").isEmpty() && !properties.getProperty("Dimensions").equalsIgnoreCase("NONE")) {
 			String[] dimensionsArr = properties.getProperty("Dimensions").split(",");
 			dimensions=new ArrayList<>(Arrays.asList(dimensionsArr));
@@ -170,8 +167,6 @@ public class DataLoader {
 		Properties properties = new Properties();
 		File pf = new File(appConfigPropFile);
 		properties.load(new FileReader(pf));
-
-		factsPropFile = "facts.properties";
 
 		extractLocationLocal = System.getProperty("user.dir") + File.separator
 				+ "DB_Extracts" + File.separator + Utility.getCurrentDate();
@@ -417,18 +412,13 @@ public class DataLoader {
 		Statement st = null;
 		ResultSet rs = null;
 		String lastModDate;
-//		String[] tmpdt = null;
 		String currDate = null;
-//		String subId;
 
-		Properties factsProp = new Properties();
 		Properties tmpProp = new Properties();
-		File pf = new File(factsPropFile);
 		File tmpFile = new File("tmpFile.properties");
 		tmpFile.createNewFile();
 
 		try {
-			factsProp.load(new FileReader(pf));
 			tmpProp.load(new FileReader(tmpFile));
 
 		} catch (IOException e) {
@@ -450,7 +440,6 @@ public class DataLoader {
 				if (!line.isEmpty()) {
 					
 					lastModDate = Utility.getDatesFromFact(factName, Utility.SUBID, Utility.factExtConstDt, Utility.factExtConstDt);
-			//		line = String.format(line, Utility.SUBID,lastModDate, lastModDate);
 					String[] queryParts= line.split("UNION");
 					StringBuilder finalQuery= new StringBuilder();
 					for(String queryPart:queryParts){
@@ -575,8 +564,6 @@ public class DataLoader {
 	public void doAmazonS3FileTransfer() throws SecurityException, IOException {
 		List<String> files = new ArrayList<>();
 		if(extractURLTableName!=null && !extractURLTableName.isEmpty()) {
-		//	files = combine(dimensions,extractURLTableName);
-		//  files = combine(files, facts);
 			files.addAll(dimensions);
 			files.addAll(extractURLTableName);
 			if(facts!=null && !facts.isEmpty()) {
@@ -755,7 +742,6 @@ public class DataLoader {
 		Connection conn = null;
 		Statement stmt = null;
 		AWSCredentials credentials = null;
-//		String lastModDate = "";
 
 		try {
 			credentials = new ProfileCredentialsProvider(awsProfile)
@@ -815,7 +801,7 @@ public class DataLoader {
 					+ accKey
 					+ ";aws_secret_access_key="
 					+ scrtKey
-					+ "' timeformat 'YYYY-MM-DD HH:MI:SS' escape removequotes delimiter as ',' IGNOREHEADER 1 ACCEPTINVCHARS;";
+					+ "' timeformat 'YYYY-MM-DD HH:MI:SS' escape removequotes delimiter as ',' IGNOREHEADER 1 ACCEPTINVCHARS COMPUPDATE OFF STATUPDATE OFF;";
 			System.out.println("Executing Query...");
 			Utility.writeLog("Executing Query...", "Info", tableName, "LoadRedshift", "DB");
 

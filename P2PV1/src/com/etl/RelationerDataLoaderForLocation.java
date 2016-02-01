@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
@@ -109,7 +108,7 @@ public class RelationerDataLoaderForLocation {
 			} catch (SQLException e) {
 				
 				System.out.println("Error!!\n" + e.getMessage());
-				Utility.writeLog("Error !!" + e.getMessage(), "Error", baseTbl, "Location Insertion", "db");
+				Utility.writeLog("Error !!" + e.getMessage(), "Error", "Location", "Location Insertion", "db");
 				msCon.rollback();
 			} finally {
 				
@@ -168,7 +167,7 @@ public class RelationerDataLoaderForLocation {
 
 						
 			System.out.println("No of locations added to the level:- " + nxtLvl + " are " + res);
-			Utility.writeLog("No of locations added to the level:- " + nxtLvl + " are " + res, "Info", baseTbl, "Level " + nxtLvl + " Location Insertion", "db");
+			Utility.writeLog("No of locations added to the level:- " + nxtLvl + " are " + res, "Info", baseTbl, "Level " + nxtLvl + "Location Insertion", "db");
 
 			if (res > 0) {
 				lvl++;
@@ -187,7 +186,7 @@ public class RelationerDataLoaderForLocation {
 			System.out.println("Error!!" + System.getProperty("line.separator")
 					+ e.getMessage());
 			
-			Utility.writeLog("Error!! " + e.getMessage(), "Error", baseTbl, "Level " + nxtLvl + " Employee Insertion", "db");
+			Utility.writeLog("Error!! " + e.getMessage(), "Error", baseTbl, "Level " + nxtLvl + "Location Insertion", "db");
 			
 			msCon.rollback();
 			
@@ -221,10 +220,10 @@ public class RelationerDataLoaderForLocation {
 					ps.setInt(1, i);
 					ps.setInt(2, i-1);
 					ps.setInt(3, i);
-					System.out.println(ps);
+					
 					res = ps.executeUpdate();
 					System.out.println("No. of locations added to the level " + i + " are " + res);
-					Utility.writeLog("No. of locations added to the level " + i + " are " + res, "Info", finalTbl, "Level " + i + " Employee Insertion", "db");
+					Utility.writeLog("No. of locations added to the level " + i + " are " + res, "Info", finalTbl, "Level " + i + "Location Insertion", "db");
 					
 				} else {
 					
@@ -237,9 +236,10 @@ public class RelationerDataLoaderForLocation {
 					ps.setInt(1, 1);
 					ps.setInt(2, i);
 					ps.setInt(3, i);
-					System.out.println(ps);
+					
 					res = ps.executeUpdate();
 					System.out.println("No. of locations added to the level " + i +" are " + res);
+					Utility.writeLog("No. of locations added to the level " + i + " are " + res, "Info", finalTbl, "Level " + i + " Location Insertion", "db");
 					
 				}
 				
@@ -260,10 +260,10 @@ public class RelationerDataLoaderForLocation {
 					ps.setInt(3, i-j);
 					ps.setInt(4, i);
 					ps.setInt(5, j);
-					System.out.println(ps);
+					
 					res = ps.executeUpdate();
 					System.out.println("No. of locations added to this level are " + res);
-					
+					Utility.writeLog("No. of locations added to the level " + i + " are " + res, "Info", finalTbl, "Level " + j+1 + " Location Insertion", "db");
 
 				}
 			}
@@ -273,7 +273,7 @@ public class RelationerDataLoaderForLocation {
 			ps = msCon.prepareStatement(sql);
 			res = ps.executeUpdate();
 			System.out.println("No. of locations added to this level are " + res);
-			
+			Utility.writeLog("No. of locations added to this level are " + res, "Info", finalTbl, "Final Level location Insertion", "db");
 
 
 		} catch (SQLException e) {
@@ -283,70 +283,27 @@ public class RelationerDataLoaderForLocation {
 			
 			msCon.rollback();
 			
-			System.exit(0);
+			Utility.writeLog("Error!!" + e.getMessage(), "Error", finalTbl, "Location Insertion", "db");
 		}
 
 	}
 
-	public ResultSet getEmployeeList(int mgrID) {
-
-		String sql;
-		Statement statement;
-		ResultSet resultSet = null;
-
-		if (mgrID == 0)
-			sql = "SELECT * FROM " + refTbl
-					+ " WHERE (SUPERVISOR_ID is null) or (SUPERVISOR_ID = 0)";
-		else
-			sql = "";
-
-		try {
-
-			statement = msCon.createStatement(
-					ResultSet.TYPE_SCROLL_INSENSITIVE,
-					ResultSet.CONCUR_READ_ONLY);
-			resultSet = statement.executeQuery(sql);
-
-		} catch (SQLException e) {
-
-			System.out.println("Error raised during executing query " + sql
-					+ "\n" + e.getMessage());
-		}
-
-		return resultSet;
-
-	}
-
-	public int recordCount(ResultSet result) {
-		int totalCount = 0;
-
-		try {
-			result.last();
-			totalCount = result.getRow();
-			result.beforeFirst();
-			return totalCount;
-
-		} catch (SQLException e) {
-
-			System.out.println("Blank or null resultset passed!!\n"
-					+ e.getMessage());
-		}
-
-		return totalCount;
-	}
 	
+		
 public void createAppTmpTbl() {
 		
 		Statement stmt = null;
 		String sql;
 		System.out.println("Temporary Table Creation is started...");
+		Utility.writeLog("Temporary Table Creation is started..." , "Info", "Location", "Location_Hierarchy_Startup", "db");
 		try {
 			stmt = msCon.createStatement();
 			sql = "DROP TABLE IF EXISTS " + redShiftSchemaNamePreStage + "." + refTbl;
 			stmt.execute(sql);
 			
 			
-			System.out.println("Creting Table " + refTbl + "...");
+			System.out.println("Creating Table " + refTbl + "...");
+			Utility.writeLog("Creating Table " + refTbl + "..." , "Info", "Location", "Location_Hierarchy_Startup", "db");
 			
 			sql = "CREATE TABLE " + redShiftSchemaNamePreStage + "." + refTbl + "(location_id integer,"
 					+ "location varchar(800), address varchar(1000), parent_id integer,parent_location varchar(800),parent_loc_address varchar(1000) )";
@@ -360,6 +317,7 @@ public void createAppTmpTbl() {
 			
 			
 			System.out.println("Creting Table " + baseTbl + "...");
+			Utility.writeLog("Creating Table " + baseTbl + "..." , "Info", "Location", "Location_Hierarchy_Startup", "db");
 			
 			sql = "CREATE TABLE " + redShiftSchemaNamePreStage + "." + baseTbl + "(location_id integer,"
 					+ "location varchar(800), address varchar(1000), parent_id integer,parent_location varchar(800),parent_loc_address varchar(1000), level integer);";
@@ -372,6 +330,7 @@ public void createAppTmpTbl() {
 			
 			
 			System.out.println("Creting Table " + finalTbl + "...");
+			Utility.writeLog("Creating Table " + finalTbl + "..." , "Info", "Location", "Location_Hierarchy_Startup", "db");
 			
 			sql = "CREATE TABLE " + redShiftSchemaNamePreStage + "." + finalTbl + "(location_id integer,"
 					+ "location varchar(800), address varchar(1000), parent_id integer, parent_location varchar(800),parent_loc_address varchar(1000), level integer, q_level integer);";
@@ -382,7 +341,8 @@ public void createAppTmpTbl() {
 			
 		} catch (SQLException e) {
 			
-			e.printStackTrace();
+			System.out.println("Error!! " + e.getMessage());
+			Utility.writeLog("Error!! " + e.getMessage(), "Error", "Location", "Location_Hierarchy_Startup", "db");
 		}
 		
 	}
@@ -392,6 +352,7 @@ public void populateAppTmpTbl() {
 	Statement stmt = null;
 	String sql;
 	System.out.println("Populating table " + refTbl + " with the data of location table");
+	Utility.writeLog("Populating table " + refTbl + " with the data of location table" , "Info", "Location", "Location_Hierarchy_Startup", "db");
 	try {
 		stmt = msCon.createStatement();
 		
@@ -403,10 +364,11 @@ public void populateAppTmpTbl() {
 		
 		int res = stmt.executeUpdate(sql);
 		System.out.println(res + " rows are populated.");
-		
+		Utility.writeLog(res + " rows are populated.", "Info", "Location", "Location_Hierarchy_Startup", "db");
 		
 	} catch(SQLException e) {
-		e.printStackTrace();
+		System.out.println("Error!! " + e.getMessage());
+		Utility.writeLog("Error !!", "Error", "Location", "Location_Hierarchy_Startup", "db");
 	}
 	
 	

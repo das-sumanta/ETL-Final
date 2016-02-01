@@ -225,7 +225,8 @@ public final class Utility {
 				Calendar calendar = Calendar.getInstance();
 				Timestamp currentTimestamp = new java.sql.Timestamp(calendar
 						.getTime().getTime());
-
+				
+				
 				logSql = "INSERT INTO message_log(runid,message_desc,target_table,message_stage,message_type,message_timestamp, subsidiary_id) "
 						+ "VALUES(?,?,?,?,?,?,?)";
 
@@ -238,6 +239,8 @@ public final class Utility {
 				ps.setTimestamp(6, currentTimestamp);
 				ps.setString(7, Utility.SUBID);
 				ps.executeUpdate();
+				if(!con.getAutoCommit()) 
+					con.commit();
 				closeConnection(con);
 
 			} catch (SQLException e1) { // Modified to capture if MySql is down

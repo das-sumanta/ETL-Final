@@ -39,7 +39,8 @@ public class EtlTester {
 				String[] fileList = args[2].split(",");
 				Utility.runID = Integer.valueOf(args[3]);
 				Utility.applicationStart(true,args[1]);
-
+				
+				
 				dl = new DataLoader("r",Utility.runID);
 				dl.createDbExtract('r', fileList);
 
@@ -115,9 +116,45 @@ public class EtlTester {
 				}
 				Utility.writeLog("RunID " + Utility.runID + " Application has ended.", "Info", "", "Application Ends", "DB"); 
 				System.out.println("\nRunID " + Utility.runID + " Application has ended.");
+				
+			} else if(args[0].equalsIgnoreCase("ErrProcess")) { 
+			
+				//TODO
+			
+			} else if(args[0].equalsIgnoreCase("Hierarchy")) {
+				
+				List<String> dimList =new ArrayList<>(Arrays.asList(args[1].split(","))); 
+				Utility.runID = Integer.valueOf(args[1]);
+				Utility.applicationStart(false,"-99");
+				
+				System.out.println("DataLoader running in Hierarchy mode");
+				
+				if(dimList.contains("employees")){
+					
+					RelationerDataLoaderForEmployees rdlEmp = new RelationerDataLoaderForEmployees();
+					rdlEmp.processResult();
+					
+				} 
+				if(dimList.contains("subsidieries")) {
+					
+					RelationerDataLoaderForSubsidiery rdlSub = new RelationerDataLoaderForSubsidiery();
+					rdlSub.processResult();
+					
+				} 
+				if(dimList.contains("locations")) {
+					
+					RelationerDataLoaderForLocation rdlLoc = new RelationerDataLoaderForLocation();
+					rdlLoc.processResult();
+					
+				} 
+				
+				
 			} else {
 				Utility.applicationStart(false,args[0]);
-
+				RelationerDataLoaderForEmployees rdlEmp = new RelationerDataLoaderForEmployees();
+				rdlEmp.processResult();
+				System.exit(0);
+				
 				String tmp = "";
 
 				dl= new DataLoader();

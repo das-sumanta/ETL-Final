@@ -41,9 +41,9 @@ public class RelationerDataLoaderForSubsidiery {
 					+ e.getMessage());
 		}
 
-		msUid = properties.getProperty("RSUID");
-		msPwd = properties.getProperty("RSPWD");
-		conStrMS = properties.getProperty("RSDBURL");
+		msUid = Utility.getConfig("RSUID");
+		msPwd = Utility.getConfig("RSPWD");
+		conStrMS = Utility.getConfig("RSDBURL");
 		baseTbl = properties.getProperty("TBLBaseSub");
 		refTbl = properties.getProperty("TBLRefSub");
 		finalTbl = properties.getProperty("TBLFinalSub");
@@ -64,13 +64,15 @@ public class RelationerDataLoaderForSubsidiery {
 			createAppTmpTbl();
 			populateAppTmpTbl(); 
 			
-		} catch (ClassNotFoundException e) {
+} catch (ClassNotFoundException e) {
 			
-			e.printStackTrace();
+			System.out.println("Error!! " + e.getMessage());
+			Utility.writeLog("Error!!! " + e.getMessage(), "Error", "Subsidiery", "Subsidiery_Hierarchy_Startup", "db");
 			
 		} catch (SQLException e) {
 			
-			e.printStackTrace();
+			System.out.println("Error!! " + e.getMessage());
+			Utility.writeLog("Error!!! " + e.getMessage(), "Error", "Subsidiery", "Subsidiery_Hierarchy_Startup", "db");
 		}
 
 	}
@@ -80,7 +82,7 @@ public class RelationerDataLoaderForSubsidiery {
 		PreparedStatement ps = null;
 		int lvl = 0, tot  = 0; 
 		System.out.println("Inserting top level subsidieries to the organization database..");
-		
+		Utility.writeLog("Inserting top level subsidieries to the organization database...", "Info", baseTbl, "Top Level Location Insertion", "db");
 			try {
 												
 				sql = "INSERT INTO "+ redShiftSchemaNamePreStage + "." 
@@ -89,38 +91,54 @@ public class RelationerDataLoaderForSubsidiery {
 						+ "SELECT subsidiary_id, full_name, parent_id, parent_full_name"
 						+ " FROM "+ redShiftSchemaNamePreStage + "." + refTbl
 					+ " WHERE (parent_id is null)";
+				
 				ps = msCon.prepareStatement(sql);
 				//ps.setInt(1, null);
 				tot = ps.executeUpdate();
-				System.out.println("No of subsidieries added to this level are " + tot); 
+				System.out.println("No. of subsidieries added to this level are " + tot); 
+				Utility.writeLog("No of subsidieries added to this level are " + tot, "Info", baseTbl, "Top Level subsidieries Insertion", "db");
 				
+				addSubsidieryBasedOnLavel(lvl + 1, lvl); 
+				addSubsiBasedOnQLavel();
+				
+				System.out.println("All subsidieries are added to the database. Program will now exit.");
+				Utility.writeLog("No of subsidieries added to this level are " + tot, "Info", baseTbl, "Top Level Location Insertion", "db");
+				msCon.close();
 
 			} catch (SQLException e) {
 				
 				System.out.println("Error!!\n" + e.getMessage());
+				Utility.writeLog("Error !!" + e.getMessage(), "Error", "Subsidiery", "Subsidiery Insertion", "db");
 				msCon.rollback();
+				
+			} finally {
+				
+				try {
+					if (ps != null)
+						ps.close();
+				} catch (Exception ex) {
+				}
+				try {
+					if (msCon != null)
+						msCon.close();
+				} catch (Exception ex) {
+					ex.printStackTrace();
+				}
 			}
-
-		
-		
-		addEmployeeBasedOnLavel(lvl + 1, lvl); 
-		addEmployeeBasedOnQLavel();
-		
-		System.out.println("All subsidieries are added to the database. Program will now exit.");
-		
-		msCon.close();
 
 	}
 
-	public void addEmployeeBasedOnLavel(int nxtLvl, int prvLvl) throws SQLException {
+	public void addSubsidieryBasedOnLavel(int nxtLvl, int prvLvl) throws SQLException {
 
 		String sql = "";
 		PreparedStatement ps = null;
 		int res = 0, lvl = prvLvl;
-		//Savepoint savepoint2 = null;
+		
 		
 		 
-		System.out.println("Inserting next level locations " + nxtLvl + " to the organization database..");
+		System.out.println("Inserting next level subsidieries " + nxtLvl + " to the organization database..");
+		Utility.writeLog("Inserting subsidieries of level " + nxtLvl + " to the organization database..", "Info", baseTbl, "Level " + nxtLvl + " Subsidiery Insertion", "db");
+		
 		if(prvLvl == 0) {
 		sql = "INSERT INTO "+ redShiftSchemaNamePreStage + "." 
 				+ baseTbl
@@ -152,14 +170,14 @@ public class RelationerDataLoaderForSubsidiery {
 		try {
 
 						
-			System.out.println("No of locations added to the level:- " + nxtLvl + " are " + res);
-			
+			System.out.println("No of subsidieries added to the level:- " + nxtLvl + " are " + res);
+			Utility.writeLog("No of subsidieries added to the level:- " + nxtLvl + " are " + res, "Info", baseTbl, "Level " + nxtLvl + "Subsidiery Insertion", "db");
 
 			if (res > 0) {
 				lvl++;
 				nxtLvl = lvl + 1;
 				prvLvl = lvl;
-				addEmployeeBasedOnLavel(nxtLvl, prvLvl);
+				addSubsidieryBasedOnLavel(nxtLvl, prvLvl);
 				
 
 			} else {
@@ -174,23 +192,20 @@ public class RelationerDataLoaderForSubsidiery {
 			
 			msCon.rollback();
 			
-			System.exit(0);
+			Utility.writeLog("Error!! " + e.getMessage(), "Error", baseTbl, "Level " + nxtLvl + "Subsidiery Insertion", "db");
 		}
 
 	}
 	
-	public void addEmployeeBasedOnQLavel() throws SQLException {
+	public void addSubsiBasedOnQLavel() throws SQLException {
 
 		String sql = "";
 		PreparedStatement ps = null;
 		int res = 0;
-		//Savepoint savepoint3 = null;
+		
 					
 		try {
-			//savepoint3 = msCon.setSavepoint("Before_Insertion_FINAL");
-			
-			//LOOP THROUGH THE DEPTH OF THE LOCATION-PARENT LOCATION HIERERCHY 
-			
+
 			for(int i = 1; i <= hierarchyDepth; i++) {
 				
 				if(i == 1){
@@ -203,10 +218,9 @@ public class RelationerDataLoaderForSubsidiery {
 					ps.setInt(1, i);
 					ps.setInt(2, i-1);
 					ps.setInt(3, i);
-					System.out.println(ps);
 					res = ps.executeUpdate();
 					System.out.println("No. of subsidieries added to the level " + i + " are " + res);
-					
+					Utility.writeLog("No. of subsidieries added to the level " + i + " are " + res, "Info", finalTbl, "Level " + i + "Subsidiery Insertion", "db");
 				} else {
 					
 					sql = "INSERT INTO "+ redShiftSchemaNamePreStage + "." + finalTbl + " (subsidiary_id, full_name, parent_id, parent_full_name,level,q_level) "
@@ -217,10 +231,9 @@ public class RelationerDataLoaderForSubsidiery {
 					ps.setInt(1, 1);
 					ps.setInt(2, i);
 					ps.setInt(3, i);
-					System.out.println(ps);
 					res = ps.executeUpdate();
 					System.out.println("No. of subsidieries added to the level " + i +" are " + res);
-					
+					Utility.writeLog("No. of subsidieries added to the level " + i + " are " + res, "Info", finalTbl, "Level " + i + "Subsidiery Insertion", "db");
 				}
 				
 				for(int j = 1; j < i; j++){
@@ -239,10 +252,9 @@ public class RelationerDataLoaderForSubsidiery {
 					ps.setInt(3, i-j);
 					ps.setInt(4, i);
 					ps.setInt(5, j);
-					System.out.println(ps);
 					res = ps.executeUpdate();
 					System.out.println("No. of subsidieries added to this level are " + res);
-					
+					Utility.writeLog("No. of subsidieries added to the level " + i + " are " + res, "Info", finalTbl, "Level " + j+1 + "Subsidiery Insertion", "db");
 
 				}
 			}
@@ -252,7 +264,7 @@ public class RelationerDataLoaderForSubsidiery {
 			ps = msCon.prepareStatement(sql);
 			res = ps.executeUpdate();
 			System.out.println("No. of subsidieries added to this level are " + res);
-			
+			Utility.writeLog("No. of subsidieries added to this level are " + res, "Info", finalTbl, "Final Level location Insertion", "db");
 
 
 		} catch (SQLException e) {
@@ -262,57 +274,12 @@ public class RelationerDataLoaderForSubsidiery {
 			
 			msCon.rollback();
 			
-			System.exit(0);
+			Utility.writeLog("Error!!" + e.getMessage(), "Error", finalTbl, "Location Insertion", "db");
 		}
 
 	}
 
-	public ResultSet getEmployeeList(int mgrID) {
-
-		String sql;
-		Statement statement;
-		ResultSet resultSet = null;
-
-		if (mgrID == 0)
-			sql = "SELECT * FROM " + refTbl
-					+ " WHERE (SUPERVISOR_ID is null) or (SUPERVISOR_ID = 0)";
-		else
-			sql = "";
-
-		try {
-
-			statement = msCon.createStatement(
-					ResultSet.TYPE_SCROLL_INSENSITIVE,
-					ResultSet.CONCUR_READ_ONLY);
-			resultSet = statement.executeQuery(sql);
-
-		} catch (SQLException e) {
-
-			System.out.println("Error raised during executing query " + sql
-					+ "\n" + e.getMessage());
-		}
-
-		return resultSet;
-
-	}
-
-	public int recordCount(ResultSet result) {
-		int totalCount = 0;
-
-		try {
-			result.last();
-			totalCount = result.getRow();
-			result.beforeFirst();
-			return totalCount;
-
-		} catch (SQLException e) {
-
-			System.out.println("Blank or null resultset passed!!\n"
-					+ e.getMessage());
-		}
-
-		return totalCount;
-	}
+	
 	
 public void createAppTmpTbl() {
 		

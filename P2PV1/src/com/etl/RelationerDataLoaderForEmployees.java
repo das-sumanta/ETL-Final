@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
@@ -46,7 +45,7 @@ public class RelationerDataLoaderForEmployees {
 		conStrMS = Utility.getConfig("RSDBURL");
 		baseTbl = properties.getProperty("TBLBaseEmp");
 		refTbl = properties.getProperty("TBLRefEmp");
-		finalTbl = properties.getProperty("TBLFinalEMP");
+		finalTbl = properties.getProperty("TBLFinalEmp");
 		redShiftSchemaNamePreStage = properties.getProperty("RSSCHEMAPRESTAGE");
 		redShiftSchemaNameStage = properties.getProperty("RSSCHEMASTAGE");
 		redShiftSchemaNameFinal = properties.getProperty("RSSCHEMA");
@@ -127,8 +126,6 @@ public class RelationerDataLoaderForEmployees {
 					ex.printStackTrace();
 				}
 			}
-			
-
 
 	}
 
@@ -249,7 +246,7 @@ public class RelationerDataLoaderForEmployees {
 					ps.setInt(5, j);
 					res = ps.executeUpdate();
 					System.out.println("No. of employess added to this level are " + res);
-					Utility.writeLog("No. of employess added to this level are " + res, "Info", finalTbl, "Level " + i + " Employee Insertion", "db");
+					Utility.writeLog("No. of employess added to this level are " + res, "Info", finalTbl, "Level " + j+1 + " Employee Insertion", "db");
 
 				}
 			}
@@ -269,55 +266,9 @@ public class RelationerDataLoaderForEmployees {
 			
 			msCon.rollback();
 			
-			Utility.writeLog("Error!!" + e.getMessage(), "Error", finalTbl, "Final Level Employee Insertion", "db");
+			Utility.writeLog("Error!!" + e.getMessage(), "Error", finalTbl, "Employee Insertion", "db");
 		}
 
-	}
-
-	public ResultSet getEmployeeList(int mgrID) {
-
-		String sql;
-		Statement statement;
-		ResultSet resultSet = null;
-
-		if (mgrID == 0)
-			sql = "SELECT * FROM "+ redShiftSchemaNamePreStage + "." + refTbl
-					+ " WHERE (SUPERVISOR_ID is null)";
-		else
-			sql = "";
-
-		try {
-
-			statement = msCon.createStatement();
-			resultSet = statement.executeQuery(sql);
-			
-
-		} catch (SQLException e) {
-
-			System.out.println("Error raised during executing query " + sql
-					+ "\n" + e.getMessage());
-		}
-		
-		return resultSet;
-
-	}
-
-	public int recordCount(ResultSet result) {
-		int totalCount = 0;
-
-		try {
-			result.last();
-			totalCount = result.getRow();
-			result.beforeFirst();
-			return totalCount;
-
-		} catch (SQLException e) {
-
-			System.out.println("Blank or null resultset passed!!\n"
-					+ e.getMessage());
-		}
-
-		return totalCount;
 	}
 	
 	public void createAppTmpTbl() {
@@ -399,25 +350,12 @@ public class RelationerDataLoaderForEmployees {
 			Utility.writeLog(res + " rows are populated.", "Info", "Employee", "Employee_Hierarchy_Startup", "db");
 			
 		} catch(SQLException e) {
+			System.out.println("Error!! " + e.getMessage());
 			Utility.writeLog("Error !!", "Error", "Employee", "Employee_Hierarchy_Startup", "db");
 		}
 		
 		
 	}
 	
-	
-
-	public static void main(String args[]) {
-
-		RelationerDataLoaderForEmployees j1 = new RelationerDataLoaderForEmployees();
-		try {
-			j1.processResult();
-			//j1.addEmployeeBasedOnQLavel();
-			
-		} catch (SQLException e) {
-
-			e.printStackTrace();
-		}
-	}
 
 }

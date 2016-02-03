@@ -316,7 +316,7 @@ public void createAppTmpTbl() {
 			stmt.execute(sql);
 			
 			
-			System.out.println("Creting Table " + baseTbl + "...");
+			System.out.println("Creating Table " + baseTbl + "...");
 			Utility.writeLog("Creating Table " + baseTbl + "..." , "Info", "Location", "Location_Hierarchy_Startup", "db");
 			
 			sql = "CREATE TABLE " + redShiftSchemaNamePreStage + "." + baseTbl + "(location_id integer,"
@@ -329,7 +329,7 @@ public void createAppTmpTbl() {
 			stmt.execute(sql);
 			
 			
-			System.out.println("Creting Table " + finalTbl + "...");
+			System.out.println("Creating Table " + finalTbl + "...");
 			Utility.writeLog("Creating Table " + finalTbl + "..." , "Info", "Location", "Location_Hierarchy_Startup", "db");
 			
 			sql = "CREATE TABLE " + redShiftSchemaNamePreStage + "." + finalTbl + "(location_id integer,"

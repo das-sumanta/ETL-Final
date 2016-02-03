@@ -284,8 +284,8 @@ public class RelationerDataLoaderForEmployees {
 			stmt.execute(sql);
 			
 			
-			System.out.println("Creting Table " + refTbl + "...");
-			Utility.writeLog("Creting Table " + refTbl + "..." , "Info", "Employee", "Employee_Hierarchy_Startup", "db");
+			System.out.println("Creating Table " + refTbl + "...");
+			Utility.writeLog("Creating Table " + refTbl + "..." , "Info", "Employee", "Employee_Hierarchy_Startup", "db");
 			
 			sql = "CREATE TABLE " + redShiftSchemaNamePreStage + "." + refTbl + "(employee_id integer,"
 					+ "employee_name varchar(500), job_title varchar(500), supervisor_id integer, "
@@ -298,8 +298,8 @@ public class RelationerDataLoaderForEmployees {
 			stmt.execute(sql);
 			
 			
-			System.out.println("Creting Table " + baseTbl + "...");
-			Utility.writeLog("Creting Table " + baseTbl + "..." , "Info", "Employee", "Employee_Hierarchy_Startup", "db");
+			System.out.println("Creating Table " + baseTbl + "...");
+			Utility.writeLog("Creating Table " + baseTbl + "..." , "Info", "Employee", "Employee_Hierarchy_Startup", "db");
 			
 			sql = "CREATE TABLE " + redShiftSchemaNamePreStage + "." + baseTbl + "(employee_id integer,"
 					+ "employee_name varchar(500), employee_job_title varchar(500), supervisor_id integer, "
@@ -312,8 +312,8 @@ public class RelationerDataLoaderForEmployees {
 			stmt.execute(sql);
 			
 			
-			System.out.println("Creting Table " + finalTbl + "...");
-			Utility.writeLog("Creting Table " + finalTbl + "..." , "Info", "Employee", "Employee_Hierarchy_Startup", "db");
+			System.out.println("Creating Table " + finalTbl + "...");
+			Utility.writeLog("Creating Table " + finalTbl + "..." , "Info", "Employee", "Employee_Hierarchy_Startup", "db");
 			
 			sql = "CREATE TABLE " + redShiftSchemaNamePreStage + "." + finalTbl + "(employee_id integer,"
 					+ "employee_name varchar(500), employee_job_title varchar(500), supervisor_id integer, "

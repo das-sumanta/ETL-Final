@@ -292,7 +292,7 @@ public void createAppTmpTbl() {
 			stmt.execute(sql);
 			
 			
-			System.out.println("Creting Table " + refTbl + "...");
+			System.out.println("Creating Table " + refTbl + "...");
 			
 			sql = "CREATE TABLE " + redShiftSchemaNamePreStage + "." + refTbl + "(subsidiary_id integer,"
 					+ "full_name varchar(1800), parent_id integer,parent_full_name varchar(1800) )";
@@ -305,7 +305,7 @@ public void createAppTmpTbl() {
 			stmt.execute(sql);
 			
 			
-			System.out.println("Creting Table " + baseTbl + "...");
+			System.out.println("Creating Table " + baseTbl + "...");
 			
 			sql = "CREATE TABLE " + redShiftSchemaNamePreStage + "." + baseTbl + "(subsidiary_id integer,"
 					+ "full_name varchar(1800), parent_id integer,parent_full_name varchar(1800), level integer);";
@@ -317,7 +317,7 @@ public void createAppTmpTbl() {
 			stmt.execute(sql);
 			
 			
-			System.out.println("Creting Table " + finalTbl + "...");
+			System.out.println("Creating Table " + finalTbl + "...");
 			
 			sql = "CREATE TABLE " + redShiftSchemaNamePreStage + "." + finalTbl + "(subsidiary_id integer,"
 					+ "full_name varchar(1800), parent_id integer,parent_full_name varchar(1800), level integer, q_level integer);";

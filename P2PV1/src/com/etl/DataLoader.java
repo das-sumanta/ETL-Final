@@ -242,7 +242,7 @@ public class DataLoader {
 
 		for(String dimension : dimList) {
 			System.out.println("\n--------------------------------------------------------");
-			System.out.println("DataExtraction Operation Started for DB table :" +dimension);
+			System.out.println("DataExtraction Operation Started for DB table :" + dimension);
 			System.out.println("--------------------------------------------------------");
 
 			Utility.writeLog("RunID " + Utility.runID+ " DataExtraction Operation Started for DB table "+ dimension, "Info", dimension,	process, "db");

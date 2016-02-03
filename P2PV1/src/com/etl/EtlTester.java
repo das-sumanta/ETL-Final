@@ -3,10 +3,12 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -14,9 +16,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Scanner;
 
 public class EtlTester {
 
+	@SuppressWarnings("resource")
 	public static void main(String[] args) throws IOException, SQLException {
 
 		Connection con = null;
@@ -28,7 +32,7 @@ public class EtlTester {
 		properties.load(new FileReader(pf));
 		String fileExtractURLTableName = properties.getProperty("FileExtractURLTableName");
 		Map<String,String> scriptExecuteMap = new HashMap<>();
-
+		SimpleDateFormat sdf = new SimpleDateFormat(properties.getProperty("DateTimeFormat"));
 		try {
 			validateCMDLineArgs(args);
 			if(args[0].equalsIgnoreCase("RunStat")) {
@@ -73,7 +77,7 @@ public class EtlTester {
 										long jobId = Utility.dbObjectJobIdMap.get(dbObject);
 										if (tmp.equalsIgnoreCase(listOfFiles[i].getName())) {
 											System.out.println("\n--------------------------------------------------------");
-											System.out.println("Script Execution Started For "+dbObject);
+											System.out.println("Script Execution Started For " + dbObject);
 											System.out.println("--------------------------------------------------------");
 
 											if (proceedWithFactScriptExecution(dbObject,scriptExecuteMap)) {
@@ -119,42 +123,158 @@ public class EtlTester {
 				
 			} else if(args[0].equalsIgnoreCase("ErrProcess")) { 
 			
-				//TODO
+				List<String> factList = new ArrayList<>(Arrays.asList(args[2].split(",")));
+								
+				if(args[1] != null) {
+					
+					String tmp = "";
+					Utility.runID = Integer.valueOf(args[1]);
+					Utility.applicationStart(true,"-99");
+					aSQLScriptFilePath = properties.getProperty("SQLScriptsPath");
+					if(aSQLScriptFilePath!=null && !aSQLScriptFilePath.isEmpty()) {
+						File folder = new File(aSQLScriptFilePath);
+						File[] listOfFiles = folder.listFiles();
+						
+						dbObjects.addAll(factList);
+						if(!dbObjects.isEmpty() && listOfFiles!=null) {
+							for (String dbObject : dbObjects) {
+								for (int i = 0; i < listOfFiles.length; i++) {
+									tmp =  dbObject + "_error_prestage_opn.sql"; 
+									
+									if (tmp.equalsIgnoreCase(listOfFiles[i].getName())) {
+										System.out.println("\n--------------------------------------------------------");
+										System.out.println("Script Execution Started For " + dbObject);
+										System.out.println("--------------------------------------------------------");
+										String content = new Scanner(new File(aSQLScriptFilePath + File.separator + listOfFiles[i].getName())).useDelimiter("\\Z").next();
+										content = content.replace("RUN_ID_PLACEHOLDER", args[1]);
+										PrintWriter pw =new PrintWriter(aSQLScriptFilePath + File.separator + listOfFiles[i].getName());
+										pw.write(content);
+										pw.close();
+										
+										Class.forName(Utility.getConfig("RSCLASS"));
+										con = DriverManager.getConnection(Utility.getConfig("RSDBURL"),	Utility.getConfig("RSUID"),Utility.getConfig("RSPWD"));
+										ScriptRunner scriptRunner = new ScriptRunner(con,false, true,dbObject,scriptExecuteMap);
+										long jobId = Utility.writeJobLog(Utility.runID, dbObject, "ErrProcess", "In-Progress");
+										Utility.writeJobLog(jobId, "REDSHIFTLOADSTART", sdf.format(Calendar.getInstance().getTime()));
+										scriptRunner.runScript(new FileReader(aSQLScriptFilePath + File.separator	+ listOfFiles[i].getName()),jobId,scriptExecuteMap);
+										Utility.writeJobLog(jobId, "REDSHIFTLOADEND", sdf.format(Calendar.getInstance().getTime()));
+										Utility.closeConnection(con);
+
+									} else {
+										continue;
+									}
+
+								
+							}
+						}
+						}
+					} else {
+						
+						throw new Exception("Error!! SQLFile Location is not defined..");
+					}
+					
+					
+				} else {
+					
+					String tmp = "";
+					Utility.runID = -99;
+					Utility.applicationStart(true,"-99");
+					aSQLScriptFilePath = properties.getProperty("SQLScriptsPath");
+					if(aSQLScriptFilePath!=null && !aSQLScriptFilePath.isEmpty()) {
+						File folder = new File(aSQLScriptFilePath);
+						File[] listOfFiles = folder.listFiles();
+						
+						dbObjects.addAll(factList);
+						if(!dbObjects.isEmpty() && listOfFiles!=null) {
+							for (String dbObject : dbObjects) {
+								for (int i = 0; i < listOfFiles.length; i++) {
+									tmp =  dbObject + "_error_prestage_opn.sql"; 
+									
+									if (tmp.equalsIgnoreCase(listOfFiles[i].getName())) {
+										System.out.println("\n--------------------------------------------------------");
+										System.out.println("Script Execution Started For " + dbObject);
+										System.out.println("--------------------------------------------------------");
+										String content = new Scanner(new File(aSQLScriptFilePath + File.separator + listOfFiles[i].getName())).useDelimiter("\\Z").next();
+										content = content.replace("RUN_ID_PLACEHOLDER", args[1]);
+										PrintWriter pw =new PrintWriter(aSQLScriptFilePath + File.separator + listOfFiles[i].getName());
+										pw.write(content);
+										pw.close();
+										
+										Class.forName(Utility.getConfig("RSCLASS"));
+										con = DriverManager.getConnection(Utility.getConfig("RSDBURL"),	Utility.getConfig("RSUID"),Utility.getConfig("RSPWD"));
+										ScriptRunner scriptRunner = new ScriptRunner(con,false, true,dbObject,scriptExecuteMap);
+										long jobId = Utility.writeJobLog(Utility.runID, dbObject, "ErrProcess", "In-Progress");
+										Utility.writeJobLog(jobId, "REDSHIFTLOADSTART", sdf.format(Calendar.getInstance().getTime()));
+										scriptRunner.runScript(new FileReader(aSQLScriptFilePath + File.separator	+ listOfFiles[i].getName()),jobId,scriptExecuteMap);
+										Utility.writeJobLog(jobId, "REDSHIFTLOADEND", sdf.format(Calendar.getInstance().getTime()));
+										Utility.closeConnection(con);
+
+									} else {
+										continue;
+									}
+
+								
+							}
+						}
+						}
+					} else {
+						throw new Exception("Error!! SQLFile Location is not defined..");
+						
+					}
+					
+				}
+				
+				Utility.writeLog("Application has ended.", "Info", "", "Application Ends", "DB"); 
+				System.out.println("Application has ended.");
 			
 			} else if(args[0].equalsIgnoreCase("Hierarchy")) {
 				
-				List<String> dimList =new ArrayList<>(Arrays.asList(args[1].split(","))); 
-				Utility.runID = Integer.valueOf(args[1]);
-				Utility.applicationStart(false,"-99");
-				
-				System.out.println("DataLoader running in Hierarchy mode");
-				
-				if(dimList.contains("employees")){
+				if(!args[1].isEmpty()) {
+					List<String> dimList =new ArrayList<>(Arrays.asList(args[1].split(","))); 
+					Utility.applicationStart(false,"-99");
 					
-					RelationerDataLoaderForEmployees rdlEmp = new RelationerDataLoaderForEmployees();
-					rdlEmp.processResult();
+					System.out.println("DataLoader running in Hierarchy mode");
+					Utility.writeLog("DataLoader running in Hierarchy mode", "Info", "", "Application Startup in Hierarchy Mode", "DB"); 
 					
-				} 
-				if(dimList.contains("subsidieries")) {
+					if(dimList.contains("employees")){
+						
+						System.out.println("Building Employees hierarchy..");
+						Utility.writeLog("Building Employees hierarchy..", "Info", "Employees", "Employee_Hierarchy_Initialization", "DB"); 
+						RelationerDataLoaderForEmployees rdlEmp = new RelationerDataLoaderForEmployees();
+						rdlEmp.processResult();
+						
+						
+					} 
+					if(dimList.contains("subsidieries")) {
+						
+						System.out.println("Building Subsidieries hierarchy..");
+						Utility.writeLog("Building Subsidieries hierarchy..", "Info", "Subsidieries", "Subsidieries_Hierarchy_Initialization", "DB");
+						RelationerDataLoaderForSubsidiery rdlSub = new RelationerDataLoaderForSubsidiery();
+						rdlSub.processResult();
+						
+					} 
+					if(dimList.contains("locations")) {
+						
+						System.out.println("Building Locations hierarchy..");
+						Utility.writeLog("Building Locations hierarchy..", "Info", "Locations", "Locations_Hierarchy_Initialization", "DB");
+						RelationerDataLoaderForLocation rdlLoc = new RelationerDataLoaderForLocation();
+						rdlLoc.processResult();
+						
+					}
 					
-					RelationerDataLoaderForSubsidiery rdlSub = new RelationerDataLoaderForSubsidiery();
-					rdlSub.processResult();
+					Utility.writeLog("RunID " + Utility.runID + " Application has ended.", "Info", "", "Application Ends", "DB"); 
+					System.out.println("\nRunID " + Utility.runID + " Application has ended.");
 					
-				} 
-				if(dimList.contains("locations")) {
+				} else {
 					
-					RelationerDataLoaderForLocation rdlLoc = new RelationerDataLoaderForLocation();
-					rdlLoc.processResult();
-					
-				} 
+					throw new Exception("Wrong or Blank Argument Passed.. Program will now exit..");
+				}
 				
 				
 			} else {
-				Utility.applicationStart(false,args[0]);
-				RelationerDataLoaderForEmployees rdlEmp = new RelationerDataLoaderForEmployees();
-				rdlEmp.processResult();
-				System.exit(0);
 				
+				Utility.applicationStart(false,args[0]);
+								
 				String tmp = "";
 
 				dl= new DataLoader();
@@ -216,6 +336,25 @@ public class EtlTester {
 						}	
 					}
 				}
+				
+				System.out.println("DataLoader running in Hierarchy mode");
+				Utility.writeLog("DataLoader running in Hierarchy mode", "Info", "", "Application Startup in Hierarchy Mode", "DB"); 
+
+				System.out.println("Building Employees hierarchy..");
+				Utility.writeLog("Building Employees hierarchy..", "Info", "Employees", "Employee_Hierarchy_Initialization", "DB"); 
+				RelationerDataLoaderForEmployees rdlEmp = new RelationerDataLoaderForEmployees();
+				rdlEmp.processResult();
+
+				System.out.println("Building Subsidieries hierarchy..");
+				Utility.writeLog("Building Subsidieries hierarchy..", "Info", "Subsidieries", "Subsidieries_Hierarchy_Initialization", "DB");
+				RelationerDataLoaderForSubsidiery rdlSub = new RelationerDataLoaderForSubsidiery();
+				rdlSub.processResult();
+
+				System.out.println("Building Locations hierarchy..");
+				Utility.writeLog("Building Locations hierarchy..", "Info", "Locations", "Locations_Hierarchy_Initialization", "DB");
+				RelationerDataLoaderForLocation rdlLoc = new RelationerDataLoaderForLocation();
+				rdlLoc.processResult();
+				
 				Utility.writeLog("RunID " + Utility.runID + " Application has ended.", "Info", "", "Application Ends", "DB"); 
 				System.out.println("\nRunID " + Utility.runID + " Application has ended.");
 				if (Utility.proceedToRunStatistics()) {
@@ -259,7 +398,7 @@ public class EtlTester {
 	}
 
 	private static void validateCMDLineArgs(String[] args) {
-		if(args.length == 0 || (args.length !=1 && args.length !=2  && args.length !=4 ))
+		if(args.length == 0 || (args.length !=1 && args.length !=2  && args.length !=3 && args.length !=4 ))
 		{
 			Utility.writeLog("Please provide valid arguments:\n 1. For NORMAL mode provide: <subsidirayId> \n 2. For RE-RUN mode provide: \n\"Re-Process\" <subsidirayId> <comma separated dimension and facts name> <RunID> \n 3. For RUN STATISTICS mode provide: \n\"RunStat\" <Optional : comma separated dimension and facts name>", "error","","Application StartUp","file");
 			System.out.println("Please provide valid arguments:\n 1. For NORMAL mode provide: <subsidirayId> \n 2. For RE-RUN mode provide: \n Re-Process <subsidirayId> <comma separated dimension and facts name> <RunID> \n 3. For RUN STATISTICS mode provide: \n\"RunStat\" <Optional : comma separated dimension and facts name>");

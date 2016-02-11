@@ -449,6 +449,8 @@ public final class Utility {
 	public static void closeConnection(Connection con) {
 
 		try {
+			if(!con.getAutoCommit())
+				con.commit();
 			if (!con.isClosed()) {
 				con.close();
 				con = null;
@@ -563,7 +565,7 @@ public final class Utility {
 
 			ResultSet rs = ps.executeQuery();
 			while(rs.next()) {
-				if(rs.getInt(1)==0) {
+				if(rs.getInt(1)                                        == 0) {
 					proceed=true;
 				} 
 			}

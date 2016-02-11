@@ -23,6 +23,8 @@ public class EtlTester {
 	@SuppressWarnings("resource")
 	public static void main(String[] args) throws IOException, SQLException {
 
+		
+		
 		Connection con = null;
 		String aSQLScriptFilePath = "";
 		List<String> dbObjects = new ArrayList<>();
@@ -278,7 +280,7 @@ public class EtlTester {
 				String tmp = "";
 
 				dl= new DataLoader();
-
+												
 				dl.createDbExtract(); 
 
 				if(!fileExtractURLTableName.equals("")) {
@@ -444,19 +446,29 @@ public class EtlTester {
 		Statement stmt = null;
 
 		for(String dimOrFactTable :dimOrFactlist) {
+			System.out.println("Vaccum started for dw_stage."+dimOrFactTable);
+			Utility.writeLog("Vaccum started for dw_stage."+dimOrFactTable, "info", dimOrFactTable, "DB_Statistics", "db");
 			String sql="Vacuum dw_stage."+dimOrFactTable;
 			stmt = con.createStatement();
 			stmt.execute(sql);
+			
+			System.out.println("Analyze started for dw_stage."+dimOrFactTable);
+			Utility.writeLog("Analyze started for dw_stage."+dimOrFactTable, "info", dimOrFactTable, "DB_Statistics", "db");
 			String sqlA="Analyze dw_stage."+dimOrFactTable;
 			stmt = con.createStatement();
 			stmt.execute(sqlA);
-
 		}
+		
 		for(String dimOrFactTable :dimOrFactlist) {
+			System.out.println("Vaccum started for dw."+dimOrFactTable);
+			Utility.writeLog("Vaccum started for dw."+dimOrFactTable, "info", dimOrFactTable, "DB_Statistics", "db");
 			String sql="Vacuum dw."+dimOrFactTable;
 			stmt = con.createStatement();
 			stmt.execute(sql);
-			String sqlA="Analyze dw."+dimOrFactTable;
+			
+			System.out.println("Analyze started for dw."+dimOrFactTable);
+			Utility.writeLog("Analyze started for dw."+dimOrFactTable, "info", dimOrFactTable, "DB_Statistics", "db");
+			String sqlA="Analyze dw."+ dimOrFactTable;
 			stmt = con.createStatement();
 			stmt.execute(sqlA);
 

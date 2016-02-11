@@ -75,7 +75,7 @@ public class DataLoader {
 	private char csvDelimiter;
 	private String[] extractURL;
 	private  List<String> extractURLTableName;
-	private List<Long> insertIDList;
+	private Map<String, Long> insertIDList = new HashMap<String, Long>();
 	private boolean isDWEntryRestricted;
 	private String dateTimeFormat;
 	private SimpleDateFormat sdf;
@@ -230,7 +230,7 @@ public class DataLoader {
 	}
 
 	public void createDBExtract(List<String> dimList, List<String> factList, String runMode,String process) throws IOException, FileNotFoundException {
-		insertIDList = new ArrayList<>();
+		insertIDList = new HashMap<String, Long>();
 		String TBL_DEF_CONF = "tbl_def.properties";
 		String factFileName;
 
@@ -247,7 +247,7 @@ public class DataLoader {
 
 			Utility.writeLog("RunID " + Utility.runID+ " DataExtraction Operation Started for DB table "+ dimension, "Info", dimension,	process, "db");
 			long jobId = Utility.writeJobLog(Utility.runID, dimension, runMode, "In-Progress");
-			insertIDList.add(jobId);
+			insertIDList.put(dimension, jobId);
 			Utility.dbObjectJobIdMap.put(dimension,jobId);
 
 			// LOAD USER SPECIFIC COLUMNS FROM THE TABLE DEFINED IN PROPERTIES FILE
@@ -331,7 +331,7 @@ public class DataLoader {
 
 				Utility.writeLog("RunID " + Utility.runID + " SQL Error!!" + e.getMessage(), "Error", dimension, process, "db");
 
-				Utility.writeJobLog(insertIDList.get(insertIDList.size()-1), "Error", "");
+				Utility.writeJobLog(insertIDList.get(dimension), "Error", "");
 
 			} catch (IOException e) {
 
@@ -340,7 +340,7 @@ public class DataLoader {
 
 				Utility.writeLog("RunID " + Utility.runID + " Error!!" + e.getMessage(), "Error", dimension, process, "db");
 
-				Utility.writeJobLog(insertIDList.get(insertIDList.size()-1), "Error", "");
+				Utility.writeJobLog(insertIDList.get(dimension), "Error", "");
 
 			} catch (Exception e) {
 				System.out.println("RunID " + Utility.runID+ " Error!! Please check the error message.\n"+ e.getMessage());
@@ -348,7 +348,7 @@ public class DataLoader {
 
 				Utility.writeLog("RunID " + Utility.runID + " Error!!" + e.getMessage(), "Error", dimension, process, "db");
 
-				Utility.writeJobLog(insertIDList.get(insertIDList.size()-1), "Error", "");
+				Utility.writeJobLog(insertIDList.get(dimension), "Error", "");
 
 			} //Removed finally continue  Not required will continue
 
@@ -365,9 +365,9 @@ public class DataLoader {
 				System.out.println("DataExtraction Operation Started for facts :" +fact);
 				System.out.println("--------------------------------------------------------");
 				Utility.writeLog("RunID " + Utility.runID+ " DataExtraction Operation Started for facts.", "Info", fact, process, "db");
-				insertIDList.add(Utility.writeJobLog(Utility.runID, fact,runMode, "In-Progress"));
-				Utility.dbObjectJobIdMap.put(fact,insertIDList.get(insertIDList.size() - 1));
-				Utility.writeJobLog(insertIDList.get(insertIDList.size()-1), "EXTRACTSTART", sdf.format(Calendar.getInstance().getTime()));
+				insertIDList.put(fact,Utility.writeJobLog(Utility.runID, fact,runMode, "In-Progress"));
+				Utility.dbObjectJobIdMap.put(fact,insertIDList.get(fact));
+				Utility.writeJobLog(insertIDList.get(fact), "EXTRACTSTART", sdf.format(Calendar.getInstance().getTime()));
 				try {
 
 					factFileName = factsSqlScriptLocation + File.separator+ fact + ".sql";
@@ -379,7 +379,7 @@ public class DataLoader {
 					System.out.println("RunID " + Utility.runID + " Error!! in extracting fact "+ fact +" due to "+ e.getMessage());
 
 					Utility.writeLog("RunID " + Utility.runID + " Error!!" + e.getMessage(), "Error", fact, process, "db");
-					Utility.writeJobLog(insertIDList.get(insertIDList.size()-1), "Error","");
+					Utility.writeJobLog(insertIDList.get(fact), "Error","");
 
 				} //Removed finally continue  Not required will continue
 			}
@@ -509,10 +509,11 @@ public class DataLoader {
 						checkList.put(factName, "Extraction Done");
 						System.out.println("Extraction Completed for fact "+ factName);
 						Utility.writeLog("RunID " + Utility.runID+ " Extraction Completed for fact " + factName, "Info", factName, process, "DB");
-						Utility.writeJobLog(insertIDList.get(insertIDList.size()-1), "EXTRACTEND", sdf.format(Calendar.getInstance().getTime()));
+						Utility.writeJobLog(insertIDList.get(factName), "EXTRACTEND", sdf.format(Calendar.getInstance().getTime()));
 						
 					} else {
 						factItr.remove();
+						//insertIDList.remove(factName);
 						System.out.println("No resultset generated after executing query for "
 										+ factName
 										+ " where DATE_LAST_MODIFIED >= "
@@ -524,7 +525,7 @@ public class DataLoader {
 										+ " where DATE_LAST_MODIFIED >= "
 										+ lastModDate, "Info", factName,
 								process, "DB");
-						Utility.writeJobLog(insertIDList.get(insertIDList.size()-1), "ERROR", null);
+						Utility.writeJobLog(insertIDList.get(factName), "EXTRACTEND", sdf.format(Calendar.getInstance().getTime()));
 								
 						checkList.put(factName, "Extraction Error");
 						scn.close();
@@ -614,7 +615,7 @@ public class DataLoader {
 			
 			if (!checkErrorStatus("Extraction", files.get(i))) {
 								
-				Utility.writeJobLog(insertIDList.get(i), "S3LOADSTART", sdf.format(Calendar.getInstance().getTime()));
+				Utility.writeJobLog(insertIDList.get(files.get(i)), "S3LOADSTART", sdf.format(Calendar.getInstance().getTime()));
 
 				try {
 
@@ -629,13 +630,13 @@ public class DataLoader {
 					if(upload.getState().ordinal()==2)
 					{
 
-						Utility.writeJobLog(insertIDList.get(i), "S3LOADEND", sdf.format(Calendar.getInstance().getTime()));
+						Utility.writeJobLog(insertIDList.get(files.get(i)), "S3LOADEND", sdf.format(Calendar.getInstance().getTime()));
 
 						Utility.writeLog("RunID " + Utility.runID +" "+ s3File.getName() + " transferred successfully.", "Info", files.get(i), process, "DB");
 
 						System.out.println(files.get(i) + " file transferred.");
 
-						Utility.writeJobLog(insertIDList.get(i), "REDSHIFTLOADSTART", sdf.format(Calendar.getInstance().getTime()));
+						Utility.writeJobLog(insertIDList.get(files.get(i)), "REDSHIFTLOADSTART", sdf.format(Calendar.getInstance().getTime()));
 
 						if(proceedWithFactsLoad(files.get(i),i))
 							loadDataToRedShiftDB(files.get(i), s3File.getName(), i);
@@ -660,7 +661,7 @@ public class DataLoader {
 					System.out.println("Error Type:       " + ase.getErrorType());
 					System.out.println("Request ID:       "	+ ase.getRequestId());
 
-					Utility.writeJobLog(insertIDList.get(i), "Error","");
+					Utility.writeJobLog(insertIDList.get(files.get(i)), "Error","");
 
 					checkList.put(files.get(i), "Loading Error");
 					
@@ -672,13 +673,13 @@ public class DataLoader {
 									+ "a serious internal problem while trying to communicate with S3, "
 									+ "such as not being able to access the network."
 									+ ace.getMessage(), "Error", files.get(i), process, "DB");
-					Utility.writeJobLog(insertIDList.get(i), "Error","");
+					Utility.writeJobLog(insertIDList.get(files.get(i)), "Error","");
 					
 				} catch (Exception e) {
 					checkList.put(files.get(i), "Loading Error");
 					System.out.println("Error !! Please check error message "+ e.getMessage());
 					Utility.writeLog("RunID " + Utility.runID + " " + e.getMessage(), "Error", files.get(i), process, "DB");
-					Utility.writeJobLog(insertIDList.get(i), "Error","");
+					Utility.writeJobLog(insertIDList.get(files.get(i)), "Error","");
 					
 				} //Removed finally continue  Not required will continue
 
@@ -709,7 +710,7 @@ public class DataLoader {
 								+" to Redshift, hence fact will not work properly, hence, dw entry will be restricted.", 
 								"Error", fact,"LoadRedshift", "DB");
 
-						Utility.writeJobLog(insertIDList.get(listIndex), "Error","");
+						Utility.writeJobLog(insertIDList.get(fact), "Error","");
 						isDWEntryRestricted=true;   
 						break;
 					}
@@ -812,7 +813,7 @@ public class DataLoader {
 			checkList.put(tableName, "Loading Done");
 			Utility.writeLog("RedShift Data loading is completed successfully for "+ tableName, "Info", tableName, "LoadRedshift", "DB");
 			
-			Utility.writeJobLog(insertIDList.get(listIndex), "REDSHIFTLOADEND", sdf.format(Calendar.getInstance().getTime()));
+			Utility.writeJobLog(insertIDList.get(tableName), "REDSHIFTLOADEND", sdf.format(Calendar.getInstance().getTime()));
 			stmt.close();
 			conn.close();
 
@@ -824,7 +825,7 @@ public class DataLoader {
 				Utility.writeLog("RunID "+ Utility.runID + " Error occured while loading data from S3 to Redshift Cluster for "
 								+ tableName + " " + ex.getMessage() + " hence, dw entry will be restricted.", "Error", tableName, "LoadRedshift", "DB");
 				
-				Utility.writeJobLog(insertIDList.get(listIndex), "ERROR", sdf.format(Calendar.getInstance().getTime())); 
+				Utility.writeJobLog(insertIDList.get(tableName), "ERROR", sdf.format(Calendar.getInstance().getTime())); 
 				isDWEntryRestricted=true; 
 			} else {
 				System.out.println("Error occured while loading data from S3 to Redshift Cluster for "+ tableName+ " " + ex.getMessage()+"\n");
@@ -832,7 +833,7 @@ public class DataLoader {
 				Utility.writeLog("RunID "+ Utility.runID + " Error occured while loading data from S3 to Redshift Cluster for "
 								+ tableName + " " + ex.getMessage(), "Error", tableName, "LoadRedshift", "DB");
 				
-				Utility.writeJobLog(insertIDList.get(listIndex), "ERROR", sdf.format(Calendar.getInstance().getTime())); 
+				Utility.writeJobLog(insertIDList.get(tableName), "ERROR", sdf.format(Calendar.getInstance().getTime())); 
 			//	isDWEntryRestricted=true; 
 			}
 			
@@ -889,7 +890,7 @@ public class DataLoader {
 						+ " location", "Info", extractURLTableName.get(i), "URLDataExtraction",	"DB");
 				
 				long jobId =Utility.writeJobLog(Utility.runID, extractURLTableName.get(i),"Normal", "In-Progress");
-				insertIDList.add(jobId);
+				insertIDList.put(extractURLTableName.get(i),jobId);
 				
 				Utility.writeJobLog(jobId, "EXTRACTSTART", sdf.format(Calendar.getInstance().getTime()));
 
@@ -933,14 +934,14 @@ public class DataLoader {
 			Utility.writeLog("Error \n " + e.getMessage(), "Error", dimName,
 					"URLDataExtraction", "DB");
 			
-			Utility.writeJobLog(insertIDList.get(insertIDList.size()-1), "Error","");
+			Utility.writeJobLog(insertIDList.get(dimName), "Error","");
 
 		} catch(Exception ex) {
 
 			Utility.writeLog("Error \n " + ex.getMessage(), "Error", dimName,
 					"URLDataExtraction", "DB");
 			
-			Utility.writeJobLog(insertIDList.get(insertIDList.size()-1), "Error","");
+			Utility.writeJobLog(insertIDList.get(dimName), "Error","");
 		}
 		
 		finally {

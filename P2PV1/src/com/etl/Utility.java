@@ -449,9 +449,10 @@ public final class Utility {
 	public static void closeConnection(Connection con) {
 
 		try {
-			if(!con.getAutoCommit())
-				con.commit();
+			
 			if (!con.isClosed()) {
+				if(!con.getAutoCommit())
+					con.commit();
 				con.close();
 				con = null;
 			}

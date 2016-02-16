@@ -28,13 +28,14 @@ public class EtlTester {
 		Connection con = null;
 		String aSQLScriptFilePath = "";
 		List<String> dbObjects = new ArrayList<>();
-		DataLoader dl=null;
+		DataLoader dl = null;
 		Properties properties = new Properties();
 		File pf = new File("config.properties");
 		properties.load(new FileReader(pf));
 		String fileExtractURLTableName = properties.getProperty("FileExtractURLTableName");
 		Map<String,String> scriptExecuteMap = new HashMap<>();
 		SimpleDateFormat sdf = new SimpleDateFormat(properties.getProperty("DateTimeFormat"));
+		List<String> hierDimLst = new ArrayList<>(Arrays.asList(properties.getProperty("HierarchyDimList").split(",")));
 		try {
 			validateCMDLineArgs(args);
 			if(args[0].equalsIgnoreCase("RunStat")) {
@@ -120,6 +121,7 @@ public class EtlTester {
 
 					}
 				}
+				
 				Utility.writeLog("RunID " + Utility.runID + " Application has ended.", "Info", "", "Application Ends", "DB"); 
 				System.out.println("\nRunID " + Utility.runID + " Application has ended.");
 				
@@ -334,34 +336,57 @@ public class EtlTester {
 
 									}
 								}
+							
+								
+							
+							}
+							for (String dbObject : dbObjects) {														
+								if(hierDimLst.contains(dbObject)) {
+									System.out.println("DataLoader running in Hierarchy mode");
+									Utility.writeLog("DataLoader running in Hierarchy mode", "Info", "", "Application Startup in Hierarchy Mode", "DB");
+									
+									switch(dbObject) {
+									
+									case "employees":
+										System.out.println("Building Employees hierarchy..");
+										Utility.writeLog("Building Employees hierarchy..", "Info", "Employees", "Employee_Hierarchy_Initialization", "DB"); 
+										RelationerDataLoaderForEmployees rdlEmp = new RelationerDataLoaderForEmployees();
+										rdlEmp.processResult();
+										break;
+										
+									case "subsidiaries":
+										System.out.println("Building Subsidieries hierarchy..");
+										Utility.writeLog("Building Subsidieries hierarchy..", "Info", "Subsidieries", "Subsidieries_Hierarchy_Initialization", "DB");
+										RelationerDataLoaderForSubsidiery rdlSub = new RelationerDataLoaderForSubsidiery();
+										rdlSub.processResult();
+										break;
+										
+									case "locations":
+										System.out.println("Building Locations hierarchy..");
+										Utility.writeLog("Building Locations hierarchy..", "Info", "Locations", "Locations_Hierarchy_Initialization", "DB");
+										RelationerDataLoaderForLocation rdlLoc = new RelationerDataLoaderForLocation();
+										rdlLoc.processResult();
+										break;
+														
+									}
+									
+								} else {
+									System.out.println("Since the current dimentions are not used in hierarchy mode, program will skip this mode.");
+									Utility.writeLog("Since the current dimentions are not used in hierarchy mode, program will skip this mode.", "Info", "", "Application Startup in Hierarchy Mode", "DB");
+								}
 							}
 						}	
 					}
+
 				}
 				
-				System.out.println("DataLoader running in Hierarchy mode");
-				Utility.writeLog("DataLoader running in Hierarchy mode", "Info", "", "Application Startup in Hierarchy Mode", "DB"); 
 
-				System.out.println("Building Employees hierarchy..");
-				Utility.writeLog("Building Employees hierarchy..", "Info", "Employees", "Employee_Hierarchy_Initialization", "DB"); 
-				RelationerDataLoaderForEmployees rdlEmp = new RelationerDataLoaderForEmployees();
-				rdlEmp.processResult();
-
-				System.out.println("Building Subsidieries hierarchy..");
-				Utility.writeLog("Building Subsidieries hierarchy..", "Info", "Subsidieries", "Subsidieries_Hierarchy_Initialization", "DB");
-				RelationerDataLoaderForSubsidiery rdlSub = new RelationerDataLoaderForSubsidiery();
-				rdlSub.processResult();
-
-				System.out.println("Building Locations hierarchy..");
-				Utility.writeLog("Building Locations hierarchy..", "Info", "Locations", "Locations_Hierarchy_Initialization", "DB");
-				RelationerDataLoaderForLocation rdlLoc = new RelationerDataLoaderForLocation();
-				rdlLoc.processResult();
-				
-				Utility.writeLog("RunID " + Utility.runID + " Application has ended.", "Info", "", "Application Ends", "DB"); 
-				System.out.println("\nRunID " + Utility.runID + " Application has ended.");
 				if (Utility.proceedToRunStatistics()) {
 					runStatistics(con, dl);
 				}
+				
+				Utility.writeLog("RunID " + Utility.runID + " Application has ended.", "Info", "", "Application Ends", "DB"); 
+				System.out.println("\nRunID " + Utility.runID + " Application has ended.");
 			}
 
 		} catch (ClassNotFoundException e) {

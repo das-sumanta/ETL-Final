@@ -355,7 +355,7 @@ public class DataLoader {
 		}
 
 		/***************************** Fact Extraction Started **************************************/
-
+//TODO DIM EXTRACT CHK
 		if (factList != null && !factList.isEmpty()) {
 
 			Iterator<String> factItr = factList.iterator();
@@ -688,6 +688,8 @@ public class DataLoader {
 				System.out.println("There is an issue while creating the extract of "+ files.get(i)	+ ". So loading operation is skipped for "+ files.get(i)+"\n");
 				Utility.writeLog("As there is an issue while creating the extract of "+ files.get(i) + " so loading operation is skipped for "
 						+ files.get(i), "Info", files.get(i), process, "DB");
+				
+				isDWEntryRestricted=true; 
 				
 			}
 		}

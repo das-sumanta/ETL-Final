@@ -448,9 +448,19 @@ public class DataLoader {
 					}
 					finalQuery.delete(finalQuery.lastIndexOf("UNION"),finalQuery.length());
 					Utility.writeLog("RunID " + Utility.runID + " Executing query for " + factName + " where DATE_LAST_MODIFIED >= " + lastModDate, "Info", factName, process, "DB");
+					
+					Calendar now = Calendar.getInstance();
+					System.out.println(sdf.format(now.getTime()));
+					now.add(Calendar.HOUR, -5);
+					now.add(Calendar.MINUTE,-30);
+					System.out.println(sdf.format(now.getTime()));
+					currDate = sdf.format(now.getTime());
+					
 					rs = st.executeQuery(finalQuery.toString());
-
-					currDate = sdf.format(Calendar.getInstance().getTime());
+					
+					
+					
+					//currDate = sdf.format(Calendar.getInstance().getTime());
 					lastModDate =  Utility.SUBID + "," + lastModDate + "," + currDate;
 					updateFactsProperty("tmpFile.properties", factName,	lastModDate);
 

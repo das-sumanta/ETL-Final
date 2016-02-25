@@ -26,6 +26,7 @@ public class EtlTester {
 		
 		
 		Connection con = null;
+		File lock = null;
 		String aSQLScriptFilePath = "";
 		List<String> dbObjects = new ArrayList<>();
 		DataLoader dl = null;
@@ -38,6 +39,10 @@ public class EtlTester {
 		List<String> hierDimLst = new ArrayList<>(Arrays.asList(properties.getProperty("HierarchyDimList").split(",")));
 		try {
 			validateCMDLineArgs(args);
+			lock = new File("lock.txt");
+			if(!lock.exists()) {
+				lock.createNewFile();
+			
 			if(args[0].equalsIgnoreCase("RunStat")) {
 				runStatisticsOnly(args,con);
 			} else if(args[0].equalsIgnoreCase("Re-Process")) {
@@ -388,6 +393,10 @@ public class EtlTester {
 				Utility.writeLog("RunID " + Utility.runID + " Application has ended.", "Info", "", "Application Ends", "DB"); 
 				System.out.println("\nRunID " + Utility.runID + " Application has ended.");
 			}
+		} else {
+			
+			throw new Exception("Application is now running. Please try again after sometime");
+		}
 
 		} catch (ClassNotFoundException e) {
 			System.out.println("Error !! Please check error message "+ e.getMessage());
@@ -410,9 +419,15 @@ public class EtlTester {
 			Utility.writeLog("RunID " + Utility.runID + " Error !! Please check error message. " + e.getMessage(), "Error","","ScriptRunner Startup","db");
 			Utility.writeLog("RunID " + Utility.runID + " Application has ended.", "Info", "", "Application Ends", "DB"); 
 			System.out.println("\nRunID " + Utility.runID + " Application has ended.");
+		
 		}finally {
 			if(con!=null)
 				Utility.closeConnection(con);
+		
+			if(lock.exists())
+				lock.delete();
+			
+				
 		}
 
 	}

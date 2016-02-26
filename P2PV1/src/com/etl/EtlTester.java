@@ -18,6 +18,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Scanner;
 
+import com.etl.exception.ConcurrentException;
+
 public class EtlTester {
 
 	@SuppressWarnings("resource")
@@ -26,6 +28,7 @@ public class EtlTester {
 		
 		
 		Connection con = null;
+		boolean lockFlg = true;
 		File lock = null;
 		String aSQLScriptFilePath = "";
 		List<String> dbObjects = new ArrayList<>();
@@ -41,7 +44,9 @@ public class EtlTester {
 			validateCMDLineArgs(args);
 			lock = new File("lock.txt");
 			if(!lock.exists()) {
+				
 				lock.createNewFile();
+				
 			
 			if(args[0].equalsIgnoreCase("RunStat")) {
 				runStatisticsOnly(args,con);
@@ -155,7 +160,7 @@ public class EtlTester {
 										System.out.println("Script Execution Started For " + dbObject);
 										System.out.println("--------------------------------------------------------");
 										String content = new Scanner(new File(aSQLScriptFilePath + File.separator + listOfFiles[i].getName())).useDelimiter("\\Z").next();
-										content = content.replace("RUN_ID_PLACEHOLDER", args[1]);
+										content = content.replace("RUNID", args[1]);
 										PrintWriter pw =new PrintWriter(aSQLScriptFilePath + File.separator + listOfFiles[i].getName());
 										pw.write(content);
 										pw.close();
@@ -395,8 +400,9 @@ public class EtlTester {
 			}
 		} else {
 			
-			throw new Exception("Application is now running. Please try again after sometime");
-		}
+			throw new ConcurrentException("The application is in already running. Please try again after sometime..");
+		} 
+			
 
 		} catch (ClassNotFoundException e) {
 			System.out.println("Error !! Please check error message "+ e.getMessage());
@@ -414,6 +420,10 @@ public class EtlTester {
 			Utility.writeLog("RunID " + Utility.runID + " Error !! Please check error message. " + e.getMessage(),"Error","","ScriptRunner Startup","db");
 			Utility.writeLog("RunID " + Utility.runID + " Application has ended.", "Info", "", "Application Ends", "DB"); 
 			System.out.println("\nRunID " + Utility.runID + " Application has ended.");
+		} catch (ConcurrentException ce) {
+			
+			lockFlg = false;
+			
 		} catch (Exception e) {
 			System.out.println("Error !! Please check error message "+ e.getMessage());
 			Utility.writeLog("RunID " + Utility.runID + " Error !! Please check error message. " + e.getMessage(), "Error","","ScriptRunner Startup","db");
@@ -424,7 +434,7 @@ public class EtlTester {
 			if(con!=null)
 				Utility.closeConnection(con);
 		
-			if(lock.exists())
+			if(lock.exists() && lockFlg)
 				lock.delete();
 			
 				

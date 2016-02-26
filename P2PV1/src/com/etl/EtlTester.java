@@ -160,7 +160,7 @@ public class EtlTester {
 										System.out.println("Script Execution Started For " + dbObject);
 										System.out.println("--------------------------------------------------------");
 										String content = new Scanner(new File(aSQLScriptFilePath + File.separator + listOfFiles[i].getName())).useDelimiter("\\Z").next();
-										content = content.replace("RUNID", args[1]);
+										content = content.replace("RUNID_ERR", args[1]);
 										PrintWriter pw =new PrintWriter(aSQLScriptFilePath + File.separator + listOfFiles[i].getName());
 										pw.write(content);
 										pw.close();

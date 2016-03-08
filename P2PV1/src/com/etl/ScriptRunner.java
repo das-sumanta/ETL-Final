@@ -9,6 +9,8 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -194,6 +196,9 @@ public class ScriptRunner {
                     
                 }
             }
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            Utility.writeJobLog(jobId, "COMPLETED",	sdf.format(Calendar.getInstance().getTime())); 
+            
             if (!this.autoCommit) { 
                 conn.commit();
             }

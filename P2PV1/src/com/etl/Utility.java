@@ -206,7 +206,7 @@ public final class Utility {
 					logger.addHandler(fh);
 					SimpleFormatter formatter = new SimpleFormatter();
 					fh.setFormatter(formatter);
-					logger.severe(msg+" Stage = "+stage+" Entity:" + entity);
+					logger.severe(msg);
 					fh.close();
 
 				} catch (Exception e) {

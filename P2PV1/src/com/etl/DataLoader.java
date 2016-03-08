@@ -149,7 +149,7 @@ public class DataLoader {
 
 			Utility.writeLog("Application Started Successfully.RunID  of this session is "+ Utility.runID, "Info", "", "Application Startup", "db");
 
-			System.out.println("************************************ WELCOME TO P2P DB DATA LOADER UTILITIES ************************************");
+			System.out.println("************************************ WELCOME TO EDW CUSTOM ETL UTILITIES ************************************");
 
 		} catch (ClassNotFoundException e) {
 			System.out.println("Error !! Please check error message "

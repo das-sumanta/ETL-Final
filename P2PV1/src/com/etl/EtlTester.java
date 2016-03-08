@@ -159,10 +159,11 @@ public class EtlTester {
 										System.out.println("\n--------------------------------------------------------");
 										System.out.println("Script Execution Started For " + dbObject);
 										System.out.println("--------------------------------------------------------");
-										String content = new Scanner(new File(aSQLScriptFilePath + File.separator + listOfFiles[i].getName())).useDelimiter("\\Z").next();
-										content = content.replace("RUNID_ERR", args[1]);
-										PrintWriter pw =new PrintWriter(aSQLScriptFilePath + File.separator + listOfFiles[i].getName());
-										pw.write(content);
+										String content_org = new Scanner(new File(aSQLScriptFilePath + File.separator + listOfFiles[i].getName())).useDelimiter("\\Z").next();
+										String content_new =  content_org;
+										content_new = content_new.replace("RUNID_ERR", args[1]);
+										PrintWriter pw =new PrintWriter(aSQLScriptFilePath + File.separator +  listOfFiles[i].getName());
+										pw.write(content_new);
 										pw.close();
 										
 										Class.forName(Utility.getConfig("RSCLASS"));
@@ -171,6 +172,9 @@ public class EtlTester {
 										long jobId = Utility.writeJobLog(Utility.runID, dbObject, "ErrProcess", "In-Progress");
 										Utility.writeJobLog(jobId, "REDSHIFTLOADSTART", sdf.format(Calendar.getInstance().getTime()));
 										scriptRunner.runScript(new FileReader(aSQLScriptFilePath + File.separator	+ listOfFiles[i].getName()),jobId,scriptExecuteMap);
+										pw =new PrintWriter(aSQLScriptFilePath + File.separator +  listOfFiles[i].getName());
+										pw.write(content_org);
+										pw.close();
 										Utility.writeJobLog(jobId, "REDSHIFTLOADEND", sdf.format(Calendar.getInstance().getTime()));
 										Utility.closeConnection(con);
 
@@ -208,10 +212,11 @@ public class EtlTester {
 										System.out.println("\n--------------------------------------------------------");
 										System.out.println("Script Execution Started For " + dbObject);
 										System.out.println("--------------------------------------------------------");
-										String content = new Scanner(new File(aSQLScriptFilePath + File.separator + listOfFiles[i].getName())).useDelimiter("\\Z").next();
-										content = content.replace("RUN_ID_PLACEHOLDER", args[1]);
-										PrintWriter pw =new PrintWriter(aSQLScriptFilePath + File.separator + listOfFiles[i].getName());
-										pw.write(content);
+										String content_org = new Scanner(new File(aSQLScriptFilePath + File.separator + listOfFiles[i].getName())).useDelimiter("\\Z").next();
+										String content_new =  content_org;
+										content_new = content_new.replace("RUNID_ERR", args[1]);
+										PrintWriter pw =new PrintWriter(aSQLScriptFilePath + File.separator +  listOfFiles[i].getName());
+										pw.write(content_new);
 										pw.close();
 										
 										Class.forName(Utility.getConfig("RSCLASS"));
@@ -220,6 +225,9 @@ public class EtlTester {
 										long jobId = Utility.writeJobLog(Utility.runID, dbObject, "ErrProcess", "In-Progress");
 										Utility.writeJobLog(jobId, "REDSHIFTLOADSTART", sdf.format(Calendar.getInstance().getTime()));
 										scriptRunner.runScript(new FileReader(aSQLScriptFilePath + File.separator	+ listOfFiles[i].getName()),jobId,scriptExecuteMap);
+										pw =new PrintWriter(aSQLScriptFilePath + File.separator +  listOfFiles[i].getName());
+										pw.write(content_org);
+										pw.close();
 										Utility.writeJobLog(jobId, "REDSHIFTLOADEND", sdf.format(Calendar.getInstance().getTime()));
 										Utility.closeConnection(con);
 
@@ -400,7 +408,7 @@ public class EtlTester {
 			}
 		} else {
 			
-			throw new ConcurrentException("The application is in already running. Please try again after sometime..");
+			throw new ConcurrentException("The application is already running. Please try again after sometime..");
 		} 
 			
 
@@ -423,6 +431,8 @@ public class EtlTester {
 		} catch (ConcurrentException ce) {
 			
 			lockFlg = false;
+			System.out.println("Error !! " + ce.getMessage());
+			Utility.writeLog(ce.getMessage(), "error", "", "Application Startup", "file");
 			
 		} catch (Exception e) {
 			System.out.println("Error !! Please check error message "+ e.getMessage());

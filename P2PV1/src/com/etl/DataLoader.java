@@ -450,10 +450,10 @@ public class DataLoader {
 					Utility.writeLog("RunID " + Utility.runID + " Executing query for " + factName + " where DATE_LAST_MODIFIED >= " + lastModDate, "Info", factName, process, "DB");
 					
 					Calendar now = Calendar.getInstance();
-					System.out.println(sdf.format(now.getTime()));
+					//System.out.println(sdf.format(now.getTime()));
 					now.add(Calendar.HOUR, -5);
 					now.add(Calendar.MINUTE,-30);
-					System.out.println(sdf.format(now.getTime()));
+					//System.out.println(sdf.format(now.getTime()));
 					currDate = sdf.format(now.getTime());
 					
 					rs = st.executeQuery(finalQuery.toString());
@@ -463,7 +463,7 @@ public class DataLoader {
 					//currDate = sdf.format(Calendar.getInstance().getTime());
 					lastModDate =  Utility.SUBID + "," + lastModDate + "," + currDate;
 					updateFactsProperty("tmpFile.properties", factName,	lastModDate);
-
+					
 					if (rs.next()) {
 
 						System.out.println("Retrieving data...");
@@ -489,12 +489,14 @@ public class DataLoader {
 								out.append(csvDelimiter);
 							}
 						}
-
-						while (rs.next()) {
+						
+						ResultSet cs = st.executeQuery(finalQuery.toString());
+						
+						while (cs.next()) {
 							List<Object> row = new ArrayList<Object>();
 							row.add(Utility.runID);
 							for (int k = 0; k <columnNames.size() - 1; k++) {
-								row.add(rs.getObject(k + 1)); 
+								row.add(cs.getObject(k + 1)); 
 							}
 
 							out.newLine();
@@ -936,6 +938,7 @@ public class DataLoader {
 				tmp.delete();  
 				Utility.writeJobLog(jobId, "EXTRACTEND", sdf.format(Calendar.getInstance().getTime()));
 				checkList.put(extractURLTableName.get(i), "Extraction Done");
+				Utility.dbObjectJobIdMap.put(extractURLTableName.get(i),jobId);
 				i++;
 			}
 			
@@ -1014,14 +1017,27 @@ public class DataLoader {
 
 	public List<String> getListOfDimensionsFacts() {
 		List<String> files = new ArrayList<>();
-		if (dimensions != null && !dimensions.isEmpty() && facts != null && !facts.isEmpty()) {
+		/*if (dimensions != null && !dimensions.isEmpty() && facts != null && !facts.isEmpty()) {
 			files.addAll(dimensions);
 			files.addAll(facts);
 		} else if (dimensions != null && !dimensions.isEmpty()  && (facts == null || facts.isEmpty())) {
 			files = dimensions;
 		} else if (dimensions == null  || dimensions.isEmpty()  && (facts != null || !facts.isEmpty())) {
 			files = facts;
-		} 
+		} */
+		
+		if(extractURLTableName!=null && !extractURLTableName.isEmpty()) {
+			files.addAll(dimensions);
+			files.addAll(extractURLTableName);
+			if(facts!=null && !facts.isEmpty()) {
+				files.addAll(facts); 
+			}
+		} else {
+			files.addAll(dimensions);
+			if(facts!=null && !facts.isEmpty()) {
+				files.addAll(facts);
+			}
+		}
 		return files;
 	}
 

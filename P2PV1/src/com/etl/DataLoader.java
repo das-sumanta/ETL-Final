@@ -883,7 +883,10 @@ public class DataLoader {
 			for(String url :extractURL) {
 				
 				dimName = extractURLTableName.get(i);
-				System.out.println("Fetching Flat file from URL " + url
+				System.out.println("\n--------------------------------------------------------");
+				System.out.println("Remote URL Extraction Started");
+				System.out.println("--------------------------------------------------------");
+				System.out.println("\n\nFetching Flat file from URL " + url
 						+ " and storing the file in " + extractLocationLocal
 						+ " location");
 				URL website = new URL(url);

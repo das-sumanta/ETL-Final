@@ -107,9 +107,9 @@ public class DataLoader {
 		}
 
 		extractLocationLocal = System.getProperty("user.dir") + File.separator
-				+ "DB_Extracts" + File.separator +  Utility.getCurrentDate();
+				+ "db_extracts" + File.separator +  Utility.getCurrentDate();
 		extractLocationURL = System.getProperty("user.dir") + File.separator
-				+ "URL_DB_Extracts" + File.separator +  Utility.getCurrentDate();
+				+ "url_db_extracts" + File.separator +  Utility.getCurrentDate();
 		extractLocationS3 = properties.getProperty("s3bucket");
 		
 		factsSqlScriptLocation = properties.getProperty("FactFileLoc");

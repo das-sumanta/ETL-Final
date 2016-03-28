@@ -918,8 +918,9 @@ public class DataLoader {
 				// (same as 'readHeader', but with additional column)
 				final String[] writeHeader = new String[readHeader.length + 1];
 				System.arraycopy(readHeader, 0, writeHeader, 0, readHeader.length);
+				System.arraycopy(writeHeader, 0, writeHeader, 1, writeHeader.length - 1);
 				final String timeHeader = "RunID";
-				writeHeader[writeHeader.length - 1] = writeHeader[0];
+				//writeHeader[writeHeader.length - 1] = writeHeader[writeHeader.length - 2];
 				writeHeader[0] = timeHeader;
 
 				mapWriter.writeHeader(writeHeader);

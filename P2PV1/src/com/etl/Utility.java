@@ -202,7 +202,7 @@ public final class Utility {
 				return;
 			case "error":
 				try {
-					FileHandler fh = new FileHandler("App.log", true);
+					FileHandler fh = new FileHandler("log\\App.log", true);
 					logger.addHandler(fh);
 					SimpleFormatter formatter = new SimpleFormatter();
 					fh.setFormatter(formatter);

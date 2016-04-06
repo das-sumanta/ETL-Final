@@ -42,14 +42,16 @@ public class EtlTester {
 		List<String> hierDimLst = new ArrayList<>(Arrays.asList(properties.getProperty("HierarchyDimList").split(",")));
 		try {
 			validateCMDLineArgs(args);
-			lock = new File("lock.txt");
+			lock = new File("lock\\lock.txt");
 			if(!lock.exists()) {
 				
 				lock.createNewFile();
 				
 			
 			if(args[0].equalsIgnoreCase("RunStat")) {
+				Utility.writeLog("Application Started Successfully.", "Info", "", "Application Startup", "db");
 				runStatisticsOnly(args,con);
+				Utility.writeLog("RunID " + Utility.runID + " Application has ended.", "Info", "", "Application Ends", "db"); 
 			} else if(args[0].equalsIgnoreCase("Re-Process")) {
 				System.out.println("DataLoader running in manual mode");
 
@@ -138,7 +140,9 @@ public class EtlTester {
 			} else if(args[0].equalsIgnoreCase("ErrProcess")) { 
 			
 				List<String> factList = new ArrayList<>(Arrays.asList(args[2].split(",")));
-								
+				Utility.writeLog(
+						"Application Started Successfully. ", "Info", "", "Application Startup", "db");			
+				
 				if(args[1] != null) {
 					
 					String tmp = "";
@@ -389,8 +393,8 @@ public class EtlTester {
 									}
 									
 								} else {
-									System.out.println("Since the current dimentions are not used in hierarchy mode, program will skip this mode.");
-									Utility.writeLog("Since the current dimentions are not used in hierarchy mode, program will skip this mode.", "Info", "", "Application Startup in Hierarchy Mode", "DB");
+									System.out.println("Since the current dimensions are not used in hierarchy mode, program will skip this mode.");
+									Utility.writeLog("Since the current dimensions are not used in hierarchy mode, program will skip this mode.", "Info", "", "Application Startup in Hierarchy Mode", "DB");
 								}
 							}
 						}	
@@ -498,44 +502,70 @@ public class EtlTester {
 
 	}
 	
-	public static void runStatisticsForTables(Connection con, List<String> dimOrFactlist) throws ClassNotFoundException, SQLException {
-		Class.forName(Utility.getConfig("RSCLASS"));
-		if(con==null || con.isClosed()) {
-			con = DriverManager.getConnection(Utility.getConfig("RSDBURL"),	Utility.getConfig("RSUID"), Utility.getConfig("RSPWD"));
-		}
-		Statement stmt = null;
-
-		for(String dimOrFactTable :dimOrFactlist) {
-			System.out.println("Vaccum started for dw_stage."+dimOrFactTable);
-			Utility.writeLog("Vaccum started for dw_stage."+dimOrFactTable, "info", dimOrFactTable, "DB_Statistics", "db");
-			String sql="Vacuum dw_stage."+dimOrFactTable;
-			stmt = con.createStatement();
-			stmt.execute(sql);
+	public static void runStatisticsForTables(Connection con, List<String> dimOrFactlist)  {
+		
+		try {
+			Class.forName(Utility.getConfig("RSCLASS"));
+			if(con==null || con.isClosed()) {
+				con = DriverManager.getConnection(Utility.getConfig("RSDBURL"),	Utility.getConfig("RSUID"), Utility.getConfig("RSPWD"));
+			}
 			
-			System.out.println("Analyze started for dw_stage."+dimOrFactTable);
-			Utility.writeLog("Analyze started for dw_stage."+dimOrFactTable, "info", dimOrFactTable, "DB_Statistics", "db");
-			String sqlA="Analyze dw_stage."+dimOrFactTable;
-			stmt = con.createStatement();
-			stmt.execute(sqlA);
+			Statement stmt = null;
+
+			for(String dimOrFactTable :dimOrFactlist) {
+				System.out.println("Vaccum started for dw_stage."+dimOrFactTable);
+				Utility.writeLog("Vaccum started for dw_stage."+dimOrFactTable, "info", dimOrFactTable, "DB_Statistics", "db");
+				String sql="Vacuum dw_stage."+dimOrFactTable;
+				stmt = con.createStatement();
+				stmt.execute(sql);
+				
+				System.out.println("Analyze started for dw_stage."+dimOrFactTable);
+				Utility.writeLog("Analyze started for dw_stage."+dimOrFactTable, "info", dimOrFactTable, "DB_Statistics", "db");
+				String sqlA="Analyze dw_stage."+dimOrFactTable;
+				stmt = con.createStatement();
+				stmt.execute(sqlA);
+			}
+			
+			for(String dimOrFactTable :dimOrFactlist) {
+				System.out.println("Vaccum started for dw."+dimOrFactTable);
+				Utility.writeLog("Vaccum started for dw."+dimOrFactTable, "info", dimOrFactTable, "DB_Statistics", "db");
+				String sql="Vacuum dw."+dimOrFactTable;
+				stmt = con.createStatement();
+				stmt.execute(sql);
+				
+				System.out.println("Analyze started for dw."+dimOrFactTable);
+				Utility.writeLog("Analyze started for dw."+dimOrFactTable, "info", dimOrFactTable, "DB_Statistics", "db");
+				String sqlA="Analyze dw."+ dimOrFactTable;
+				stmt = con.createStatement();
+				stmt.execute(sqlA);
+
+			}
+			
+			Utility.closeConnection(con);
+			Utility.writeLog("RunID " + Utility.runID + " Vacuum, Analyzed Successfully.", "Info", "", "Run Statistics", "DB"); 
+			System.out.println("\nRunID " + Utility.runID + " Vacuum, Analyzed Successfully.");
+			
+			
+		} catch (ClassNotFoundException e) {
+			
+			Utility.writeLog("RunID " + Utility.runID + "Error !! Please check error message. "
+					+ e.getMessage(), "Error", "", "Application Startup", "db");
+			
+		} catch (SQLException e) {
+			
+			Utility.writeLog("RunID " + Utility.runID + "Error !! Please check error message. "
+					+ e.getMessage(), "Error", "", "Application Startup", "db");
+			
+		} catch (Exception e) {
+			
+			Utility.writeLog("RunID " + Utility.runID + "Error !! Please check error message. "
+					+ e.getMessage(), "Error", "", "Application Startup", "db");
+			
 		}
 		
-		for(String dimOrFactTable :dimOrFactlist) {
-			System.out.println("Vaccum started for dw."+dimOrFactTable);
-			Utility.writeLog("Vaccum started for dw."+dimOrFactTable, "info", dimOrFactTable, "DB_Statistics", "db");
-			String sql="Vacuum dw."+dimOrFactTable;
-			stmt = con.createStatement();
-			stmt.execute(sql);
-			
-			System.out.println("Analyze started for dw."+dimOrFactTable);
-			Utility.writeLog("Analyze started for dw."+dimOrFactTable, "info", dimOrFactTable, "DB_Statistics", "db");
-			String sqlA="Analyze dw."+ dimOrFactTable;
-			stmt = con.createStatement();
-			stmt.execute(sqlA);
-
-		}
-		Utility.closeConnection(con);
-		Utility.writeLog("RunID " + Utility.runID + " Vacuum, Analyzed Successfully.", "Info", "", "Run Statistics", "DB"); 
-		System.out.println("\nRunID " + Utility.runID + " Vacuum, Analyzed Successfully.");
+		
+		
+		
 	}
 
 }

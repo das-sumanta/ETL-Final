@@ -514,13 +514,13 @@ public class EtlTester {
 
 			for(String dimOrFactTable :dimOrFactlist) {
 				System.out.println("Vaccum started for dw_stage."+dimOrFactTable);
-				Utility.writeLog("Vaccum started for dw_stage."+dimOrFactTable, "info", dimOrFactTable, "DB_Statistics", "db");
+				Utility.writeLog("Vaccum started for dw_stage."+dimOrFactTable, "Info", dimOrFactTable, "DB_Statistics", "db");
 				String sql="Vacuum dw_stage."+dimOrFactTable;
 				stmt = con.createStatement();
 				stmt.execute(sql);
 				
 				System.out.println("Analyze started for dw_stage."+dimOrFactTable);
-				Utility.writeLog("Analyze started for dw_stage."+dimOrFactTable, "info", dimOrFactTable, "DB_Statistics", "db");
+				Utility.writeLog("Analyze started for dw_stage."+dimOrFactTable, "Info", dimOrFactTable, "DB_Statistics", "db");
 				String sqlA="Analyze dw_stage."+dimOrFactTable;
 				stmt = con.createStatement();
 				stmt.execute(sqlA);
@@ -528,13 +528,13 @@ public class EtlTester {
 			
 			for(String dimOrFactTable :dimOrFactlist) {
 				System.out.println("Vaccum started for dw."+dimOrFactTable);
-				Utility.writeLog("Vaccum started for dw."+dimOrFactTable, "info", dimOrFactTable, "DB_Statistics", "db");
+				Utility.writeLog("Vaccum started for dw."+dimOrFactTable, "Info", dimOrFactTable, "DB_Statistics", "db");
 				String sql="Vacuum dw."+dimOrFactTable;
 				stmt = con.createStatement();
 				stmt.execute(sql);
 				
 				System.out.println("Analyze started for dw."+dimOrFactTable);
-				Utility.writeLog("Analyze started for dw."+dimOrFactTable, "info", dimOrFactTable, "DB_Statistics", "db");
+				Utility.writeLog("Analyze started for dw."+dimOrFactTable, "Info", dimOrFactTable, "DB_Statistics", "db");
 				String sqlA="Analyze dw."+ dimOrFactTable;
 				stmt = con.createStatement();
 				stmt.execute(sqlA);

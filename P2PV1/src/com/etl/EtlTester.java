@@ -140,14 +140,17 @@ public class EtlTester {
 			} else if(args[0].equalsIgnoreCase("ErrProcess")) { 
 			
 				List<String> factList = new ArrayList<>(Arrays.asList(args[2].split(",")));
-				Utility.writeLog(
-						"Application Started Successfully. ", "Info", "", "Application Startup", "db");			
+							
 				
 				if(args[1] != null) {
 					
 					String tmp = "";
 					Utility.runID = Integer.valueOf(args[1]);
 					Utility.applicationStart(true,"-99");
+					
+					Utility.writeLog(
+							"Application Started Successfully. ", "Info", "", "Application Startup", "db");
+					
 					aSQLScriptFilePath = properties.getProperty("SQLScriptsPath");
 					if(aSQLScriptFilePath!=null && !aSQLScriptFilePath.isEmpty()) {
 						File folder = new File(aSQLScriptFilePath);
@@ -201,6 +204,8 @@ public class EtlTester {
 					String tmp = "";
 					Utility.runID = -99;
 					Utility.applicationStart(true,"-99");
+					Utility.writeLog(
+							"Application Started Successfully. ", "Info", "", "Application Startup", "db");
 					aSQLScriptFilePath = properties.getProperty("SQLScriptsPath");
 					if(aSQLScriptFilePath!=null && !aSQLScriptFilePath.isEmpty()) {
 						File folder = new File(aSQLScriptFilePath);

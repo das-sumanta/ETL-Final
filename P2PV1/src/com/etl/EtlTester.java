@@ -42,7 +42,7 @@ public class EtlTester {
 		List<String> hierDimLst = new ArrayList<>(Arrays.asList(properties.getProperty("HierarchyDimList").split(",")));
 		try {
 			validateCMDLineArgs(args);
-			lock = new File("lock\\lock.txt");
+			lock = new File("lock" + File.separator + "lock.txt");
 			if(!lock.exists()) {
 				
 				lock.createNewFile();

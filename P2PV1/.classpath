@@ -3,9 +3,9 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
 	<classpathentry exported="true" kind="con" path="com.amazonaws.eclipse.sdk.AWS_JAVA_SDK"/>
-	<classpathentry exported="true" kind="lib" path="C:/Users/540366/P2PFinal-Details/P2PFinal-Jars/mysql-connector-java-5.1.36-bin.jar"/>
-	<classpathentry exported="true" kind="lib" path="C:/Users/540366/P2PFinal-Details/P2PFinal-Jars/NQjc.jar"/>
-	<classpathentry exported="true" kind="lib" path="C:/Users/540366/P2PFinal-Details/P2PFinal-Jars/RedshiftJDBC41.jar"/>
-	<classpathentry exported="true" kind="lib" path="C:/Users/540366/P2PFinal-Details/P2PFinal-Jars/super-csv-2.4.0.jar"/>
+	<classpathentry kind="lib" path="D:/Jars/mysql-connector-java-5.1.36-bin.jar"/>
+	<classpathentry kind="lib" path="D:/Jars/NQjc.jar"/>
+	<classpathentry kind="lib" path="D:/Jars/RedshiftJDBC41.jar"/>
+	<classpathentry kind="lib" path="D:/Jars/super-csv-2.4.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

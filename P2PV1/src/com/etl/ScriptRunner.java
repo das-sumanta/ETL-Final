@@ -1,5 +1,7 @@
 package com.etl;
 
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.LineNumberReader;
 import java.io.PrintWriter;
@@ -13,6 +15,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 
 
@@ -191,6 +194,22 @@ public class ScriptRunner {
                 } else { // Line is middle of a statement
 
                     // Append
+                	//Replace schema name in the sql query Added on 03/06/2016
+                	Properties properties = new Properties();
+    				File pf = new File("config.properties");
+    				properties.load(new FileReader(pf));
+
+
+    				if(line.contains("dw_prestage")) {
+                    	line = line.replace("dw_prestage", properties.getProperty("RSSCHEMAPRESTAGE"));
+                    } else if(line.contains("dw_stage")) {
+                    	line = line.replace("dw_stage", properties.getProperty("RSSCHEMASTAGE"));
+                    	
+                    } else if(line.contains("dw")) {
+                    	line = line.replace("dw", properties.getProperty("RSSCHEMA"));
+                    } else {
+                    	line = line.replace("dw_report", properties.getProperty("RSSCHEMARPT"));
+                    }
                     command.append(line);
                     command.append(" ");
                     
